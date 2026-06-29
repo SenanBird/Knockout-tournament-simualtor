@@ -1,0 +1,618 @@
+{
+  "matches": [
+    {
+      "id": 73,
+      "phase": "R32",
+      "team1": "South Africa",
+      "team2": "Canada",
+      "home_xg": 1.01,
+      "away_xg": 1.12,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3141,
+        "draw": 0.3282,
+        "team2_win": 0.3577
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "Canada",
+      "loser": "South Africa"
+    },
+    {
+      "id": 74,
+      "phase": "R32",
+      "team1": "Germany",
+      "team2": "Paraguay",
+      "home_xg": 2.4200,
+      "away_xg": 0.7200,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.7511,
+        "draw": 0.1595,
+        "team2_win": 0.0894
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Germany",
+      "loser": "Paraguay"
+    },
+    {
+      "id": 75,
+      "phase": "R32",
+      "team1": "Netherlands",
+      "team2": "Morocco",
+      "home_xg": 1.5900,
+      "away_xg": 0.8300,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5242,
+        "draw": 0.2727,
+        "team2_win": 0.2030
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Netherlands",
+      "loser": "Morocco"
+    },
+    {
+      "id": 76,
+      "phase": "R32",
+      "team1": "Brazil",
+      "team2": "Japan",
+      "home_xg": 2.3800,
+      "away_xg": 0.5200,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.7684,
+        "draw": 0.1567,
+        "team2_win": 0.0749
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Brazil",
+      "loser": "Japan"
+    },
+    {
+      "id": 77,
+      "phase": "R32",
+      "team1": "France",
+      "team2": "Sweden",
+      "home_xg": 1.7100,
+      "away_xg": 0.6700,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5844,
+        "draw": 0.2573,
+        "team2_win": 0.1582
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "France",
+      "loser": "Sweden"
+    },
+    {
+      "id": 78,
+      "phase": "R32",
+      "team1": "Ivory Coast",
+      "team2": "Norway",
+      "home_xg": 1.0800,
+      "away_xg": 1.2000,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3189,
+        "draw": 0.3109,
+        "team2_win": 0.3702
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "Norway",
+      "loser": "Ivory Coast"
+    },
+    {
+      "id": 79,
+      "phase": "R32",
+      "team1": "Mexico",
+      "team2": "Ecuador",
+      "home_xg": 1.2200,
+      "away_xg": 1.5000,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3014,
+        "draw": 0.2673,
+        "team2_win": 0.4314
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "Ecuador",
+      "loser": "Mexico"
+    },
+    {
+      "id": 80,
+      "phase": "R32",
+      "team1": "England",
+      "team2": "DR Congo",
+      "home_xg": 3.4300,
+      "away_xg": 0.3600,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.9153,
+        "draw": 0.0651,
+        "team2_win": 0.0196
+      },
+      "final_score": "3-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "England",
+      "loser": "DR Congo"
+    },
+    {
+      "id": 81,
+      "phase": "R32",
+      "team1": "United States",
+      "team2": "Bosnia and Herzegovina",
+      "home_xg": 1.7200,
+      "away_xg": 0.7500,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5748,
+        "draw": 0.2543,
+        "team2_win": 0.1709
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "United States",
+      "loser": "Bosnia and Herzegovina"
+    },
+    {
+      "id": 82,
+      "phase": "R32",
+      "team1": "Belgium",
+      "team2": "Senegal",
+      "home_xg": 1.7300,
+      "away_xg": 0.7800,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5724,
+        "draw": 0.2525,
+        "team2_win": 0.1750
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Belgium",
+      "loser": "Senegal"
+    },
+    {
+      "id": 83,
+      "phase": "R32",
+      "team1": "Portugal",
+      "team2": "Croatia",
+      "home_xg": 1.8900,
+      "away_xg": 0.7600,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.6196,
+        "draw": 0.2290,
+        "team2_win": 0.1514
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Portugal",
+      "loser": "Croatia"
+    },
+    {
+      "id": 84,
+      "phase": "R32",
+      "team1": "Spain",
+      "team2": "Austria",
+      "home_xg": 2.5700,
+      "away_xg": 0.5700,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.7977,
+        "draw": 0.1372,
+        "team2_win": 0.0651
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Spain",
+      "loser": "Austria"
+    },
+    {
+      "id": 85,
+      "phase": "R32",
+      "team1": "Switzerland",
+      "team2": "Algeria",
+      "home_xg": 1.5900,
+      "away_xg": 1.2200,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4536,
+        "draw": 0.2587,
+        "team2_win": 0.2877
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "Switzerland",
+      "loser": "Algeria"
+    },
+    {
+      "id": 86,
+      "phase": "R32",
+      "team1": "Argentina",
+      "team2": "Cape Verde",
+      "home_xg": 2.4700,
+      "away_xg": 0.4800,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.7899,
+        "draw": 0.1448,
+        "team2_win": 0.0653
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Argentina",
+      "loser": "Cape Verde"
+    },
+    {
+      "id": 87,
+      "phase": "R32",
+      "team1": "Colombia",
+      "team2": "Ghana",
+      "home_xg": 1.5000,
+      "away_xg": 0.7500,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5105,
+        "draw": 0.2906,
+        "team2_win": 0.1989
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Colombia",
+      "loser": "Ghana"
+    },
+    {
+      "id": 88,
+      "phase": "R32",
+      "team1": "Australia",
+      "team2": "Egypt",
+      "home_xg": 1.2900,
+      "away_xg": 0.9800,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4119,
+        "draw": 0.3077,
+        "team2_win": 0.2804
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Australia",
+      "loser": "Egypt"
+    },
+    {
+      "id": 89,
+      "phase": "R16",
+      "team1": "Germany",
+      "team2": "France",
+      "home_xg": 1.0500,
+      "away_xg": 1.4100,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.2776,
+        "draw": 0.2874,
+        "team2_win": 0.4350
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "France",
+      "loser": "Germany"
+    },
+    {
+      "id": 90,
+      "phase": "R16",
+      "team1": "Canada",
+      "team2": "Netherlands",
+      "home_xg": 0.5600,
+      "away_xg": 2.6300,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.0608,
+        "draw": 0.1309,
+        "team2_win": 0.8083
+      },
+      "final_score": "0-2",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Netherlands",
+      "loser": "Canada"
+    },
+    {
+      "id": 91,
+      "phase": "R16",
+      "team1": "Brazil",
+      "team2": "Norway",
+      "home_xg": 1.9600,
+      "away_xg": 0.6100,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.6605,
+        "draw": 0.2175,
+        "team2_win": 0.1221
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Brazil",
+      "loser": "Norway"
+    },
+    {
+      "id": 92,
+      "phase": "R16",
+      "team1": "Ecuador",
+      "team2": "England",
+      "home_xg": 0.7600,
+      "away_xg": 1.9500,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.1428,
+        "draw": 0.2190,
+        "team2_win": 0.6382
+      },
+      "final_score": "0-1",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "England",
+      "loser": "Ecuador"
+    },
+    {
+      "id": 93,
+      "phase": "R16",
+      "team1": "Portugal",
+      "team2": "Spain",
+      "home_xg": 0.9600,
+      "away_xg": 1.4900,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.2437,
+        "draw": 0.2817,
+        "team2_win": 0.4746
+      },
+      "final_score": "0-1",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Spain",
+      "loser": "Portugal"
+    },
+    {
+      "id": 94,
+      "phase": "R16",
+      "team1": "United States",
+      "team2": "Belgium",
+      "home_xg": 0.9900,
+      "away_xg": 1.7900,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.2030,
+        "draw": 0.2410,
+        "team2_win": 0.5560
+      },
+      "final_score": "0-1",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Belgium",
+      "loser": "United States"
+    },
+    {
+      "id": 95,
+      "phase": "R16",
+      "team1": "Argentina",
+      "team2": "Australia",
+      "home_xg": 2.2100,
+      "away_xg": 0.5700,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.7265,
+        "draw": 0.1800,
+        "team2_win": 0.0935
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Argentina",
+      "loser": "Australia"
+    },
+    {
+      "id": 96,
+      "phase": "R16",
+      "team1": "Switzerland",
+      "team2": "Colombia",
+      "home_xg": 1.0900,
+      "away_xg": 1.1300,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3321,
+        "draw": 0.3178,
+        "team2_win": 0.3502
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "Colombia",
+      "loser": "Switzerland"
+    },
+    {
+      "id": 97,
+      "phase": "QF",
+      "team1": "France",
+      "team2": "Netherlands",
+      "home_xg": 1.3200,
+      "away_xg": 0.9200,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4302,
+        "draw": 0.3083,
+        "team2_win": 0.2616
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "France",
+      "loser": "Netherlands"
+    },
+    {
+      "id": 98,
+      "phase": "QF",
+      "team1": "Spain",
+      "team2": "Belgium",
+      "home_xg": 2.1600,
+      "away_xg": 0.7800,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.6860,
+        "draw": 0.1921,
+        "team2_win": 0.1219
+      },
+      "final_score": "2-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Spain",
+      "loser": "Belgium"
+    },
+    {
+      "id": 99,
+      "phase": "QF",
+      "team1": "Brazil",
+      "team2": "England",
+      "home_xg": 1.0200,
+      "away_xg": 1.2000,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3017,
+        "draw": 0.3165,
+        "team2_win": 0.3819
+      },
+      "final_score": "1-1",
+      "extra_time": true,
+      "penalties": true,
+      "winner": "England",
+      "loser": "Brazil"
+    },
+    {
+      "id": 100,
+      "phase": "QF",
+      "team1": "Argentina",
+      "team2": "Colombia",
+      "home_xg": 1.3300,
+      "away_xg": 0.8400,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4449,
+        "draw": 0.3127,
+        "team2_win": 0.2425
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Argentina",
+      "loser": "Colombia"
+    },
+    {
+      "id": 101,
+      "phase": "SF",
+      "team1": "France",
+      "team2": "Spain",
+      "home_xg": 1.2300,
+      "away_xg": 0.9600,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.3980,
+        "draw": 0.3187,
+        "team2_win": 0.2832
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "France",
+      "loser": "Spain"
+    },
+    {
+      "id": 102,
+      "phase": "SF",
+      "team1": "England",
+      "team2": "Argentina",
+      "home_xg": 1.4700,
+      "away_xg": 0.8000,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4934,
+        "draw": 0.2932,
+        "team2_win": 0.2134
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "England",
+      "loser": "Argentina"
+    },
+    {
+      "id": 103,
+      "phase": "3rd",
+      "team1": "Spain",
+      "team2": "Argentina",
+      "home_xg": 1.5500,
+      "away_xg": 0.8400,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.5127,
+        "draw": 0.2775,
+        "team2_win": 0.2098
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "Spain",
+      "loser": "Argentina"
+    },
+    {
+      "id": 104,
+      "phase": "Final",
+      "team1": "France",
+      "team2": "England",
+      "home_xg": 1.2600,
+      "away_xg": 0.9100,
+      "is_played": false,
+      "90min_probabilities": {
+        "team1_win": 0.4148,
+        "draw": 0.3186,
+        "team2_win": 0.2667
+      },
+      "final_score": "1-0",
+      "extra_time": false,
+      "penalties": false,
+      "winner": "France",
+      "loser": "England"
+    }
+  ],
+  "podium": {
+    "winner": "France",
+    "runner_up": "England",
+    "third_place": "Spain",
+    "fourth_place": "Argentina"
+  }
+}

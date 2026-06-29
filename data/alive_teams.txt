@@ -1,0 +1,48 @@
+Mexico,0
+South Africa,0
+South Korea,1
+Czech Republic,1
+Canada,0
+Bosnia and Herzegovina,0
+Qatar,1
+Switzerland,0
+Brazil,0
+Morocco,0
+Haiti,1
+Scotland,1
+United States,0
+Paraguay,0
+Australia,0
+Turkey,1
+Germany,0
+Curaçao,1
+Ivory Coast,0
+Ecuador,0
+Netherlands,0
+Japan,0
+Sweden,0
+Tunisia,1
+Belgium,0
+Egypt,0
+Iran,1
+New Zealand,1
+Spain,0
+Cape Verde,0
+Saudi Arabia,1
+Uruguay,1
+France,0
+Senegal,0
+Iraq,1
+Norway,0
+Argentina,0
+Algeria,0
+Austria,0
+Jordan,1
+Portugal,0
+DR Congo,0
+Uzbekistan,1
+Colombia,0
+England,0
+Croatia,0
+Ghana,0
+Panama,1
