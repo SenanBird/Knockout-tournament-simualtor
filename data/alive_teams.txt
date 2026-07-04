@@ -44,5 +44,5 @@ Uzbekistan,1
 Colombia,0
 England,0
 Croatia,1
-Ghana,0
+Ghana,1
 Panama,1
