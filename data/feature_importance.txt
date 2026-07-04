@@ -1,17 +1,12 @@
 ============================================================
 FEATURE IMPORTANCE (Permutation Loss Increase)
 ============================================================
-Baseline validation loss: 1.012435
+Baseline validation loss: 1.014745
 
-Feature                        Importance
-------------------------------------------
-Squad Max Diff                 0.000568
-FIFA Diff                      0.000569
-Count >50M Diff                0.001510
-Squad Var Diff                 0.003534
-Squad Median Diff              0.006511
-Squad Sum Diff                 0.007246
-Elo Diff                       0.027208
-------------------------------------------
-
-Sorted by importance (lowest to highest).
+Weighted Margin Diff           0.003222
+Count >50M Diff                0.003321
+FIFA Diff                      0.004457
+Squad Median Diff              0.012986
+Squad Sum Diff                 0.023281
+Squad Var Diff                 0.024687
+Elo Diff                       0.036236

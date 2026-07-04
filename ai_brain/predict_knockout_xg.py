@@ -3,12 +3,13 @@
 FIFA World Cup 2026 – Knockout Stage xG & Probability Lookup Table Generator
 ================================================================================
 - Symmetric xG via two‑pass averaging.
-- Calibrated win/draw/loss probabilities using multinomial logistic regression.
-- Mirroring during calibration guarantees perfect symmetry.
-- Debug CSV with all features and probabilities.
-(Overfitting counter‑measures applied: pruned features, stronger regularization,
- early stopping, feature masking, reduced capacity. FIFA Diff kept.)
-Output: knockout_xg_lookup.csv + knockout_prob_lookup.csv + prediction_debug.csv
+- Probabilities derived by Poisson simulation (50k draws) – NO logistic regression.
+- Mirroring during xG computation guarantees symmetry.
+- Features: Elo, Squad Sum/Median/Var, Count>50M, FIFA, Weighted Margin (7 total)
+- Asymmetric dropout: Elo dropped 30% of the time, others 10%.
+- Squad Max Diff removed (importance 0.0).
+- **Actual Transfermarkt squad totals + averages** used for 2026 teams.
+Output: knockout_prob_lookup.csv + prediction_debug.csv (minimal)
 """
 
 import torch
@@ -23,7 +24,6 @@ from itertools import product
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
-from sklearn.linear_model import LogisticRegression
 import multiprocessing as mp
 import matplotlib
 matplotlib.use('Agg')
@@ -42,7 +42,7 @@ DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../Training Data")) + "/"
 OUTPUT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../data")) + "/"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-FORCE_FRESH = False                # Set to True to delete all caches and retrain from scratch
+FORCE_FRESH = True                  # Set to True to delete caches and retrain with 7 features
 
 MODEL_PATH = f"{OUTPUT_DIR}best_model.pt"
 DEBUG_FILE = f"{OUTPUT_DIR}team_features_debug.txt"
@@ -51,17 +51,23 @@ ELO_CACHE_FILE = f"{OUTPUT_DIR}elo_state_cache.pkl"
 SQUAD_CACHE_FILE = f"{OUTPUT_DIR}squad_cache.pkl"
 ALIVE_FILE = f"{OUTPUT_DIR}alive_teams.txt"
 
+TRANSFERMARKT_FILE = f"{DATA_DIR}transfermarkt_squad_values_2026.csv"
+
 HISTORY_LEN = 10
 EMBEDDING_DIM = 16
 MIN_YEAR = 2000
 CURRENT_YEAR = 2026
 REF_DATE = pd.Timestamp('2026-06-01')
-TEMPORAL_DECAY_LAMBDA = 0.15         # steeper decay for recency
+TEMPORAL_DECAY_LAMBDA = 0.15
 EPOCHS = 100
 LEARNING_RATE = 0.0005
 BATCH_SIZE = 256
 N_JOBS = -1
 NUM_CORES = mp.cpu_count()
+
+# Poisson simulation parameters
+POISSON_SIMULATIONS = 50000
+POISSON_RANDOM_SEED = 42          # for reproducibility
 
 if FORCE_FRESH:
     for f in [MODEL_PATH, DEBUG_FILE, TEAM_MAP_FILE, ELO_CACHE_FILE, SQUAD_CACHE_FILE]:
@@ -128,7 +134,7 @@ results_df['Weight'] = np.exp(-TEMPORAL_DECAY_LAMBDA * (CURRENT_YEAR - results_d
 print(f"  Loaded {len(results_df):,} historical matches. ({time.time()-t_start:.1f}s)")
 
 # =========================================================================
-# 2. FIFA RANKINGS (used for squad fallback AND as a feature)
+# 2. FIFA RANKINGS
 # =========================================================================
 print("Processing FIFA rankings...")
 fifa_df = fifa_df[['rank_date', 'country_full', 'total_points']].copy()
@@ -263,6 +269,50 @@ def squad_for_country_up_to_year(country, ref_year):
             'var': float(top23.var()) if len(top23) > 1 else 0.0,
             'max': float(top23.max()), 'count_above_50M': int((top23 > 50).sum())}
 
+def squad_for_country_fast(country, ref_year):
+    """Fast parallelisable version using pre-filtered team_valuations."""
+    country_players = players_df[players_df['country_of_citizenship'] == country]
+    if country_players.empty:
+        fifa_val = get_fifa_points(country, pd.Timestamp(f'{ref_year}-06-01'))
+        estimated_sum = 50.0 + (fifa_val - 1500) * 0.02
+        return {'sum': max(30.0, estimated_sum), 'median': max(1.5, estimated_sum/20),
+                'var': 0.0, 'max': max(2.0, estimated_sum/20), 'count_above_50M': 0}
+    val_subset = team_valuations[country][
+        team_valuations[country]['date'] <= pd.Timestamp(f'{ref_year}-06-01')
+    ]
+    latest_vals = (val_subset.sort_values('date').groupby('player_id').last().reset_index()
+                   if not val_subset.empty else pd.DataFrame(columns=['player_id','market_value_in_eur']))
+    squad_df = country_players[['player_id']].merge(latest_vals, on='player_id', how='left')
+    squad_df['market_value_in_eur'] = pd.to_numeric(squad_df['market_value_in_eur'], errors='coerce')
+    market_vals = squad_df['market_value_in_eur'].fillna(0.0) / 1_000_000.0
+    if (market_vals <= 0).any() and value_predictor is not None:
+        missing_mask = market_vals <= 0
+        missing_players = country_players[country_players['player_id'].isin(
+            squad_df.loc[missing_mask, 'player_id'])]
+        if not missing_players.empty:
+            predicted = batch_predict_market_values(missing_players, value_predictor,
+                                                    pd.Timestamp(f'{ref_year}-06-01'))
+            pred_map = dict(zip(missing_players['player_id'], predicted / 1_000_000.0))
+            for pid, val in pred_map.items():
+                idx = squad_df[squad_df['player_id'] == pid].index
+                if len(idx) > 0:
+                    market_vals.loc[idx[0]] = val
+    known_vals = market_vals[market_vals > 0]
+    if len(known_vals) == 0:
+        fifa_val = get_fifa_points(country, pd.Timestamp(f'{ref_year}-06-01'))
+        estimated_sum = 50.0 + (fifa_val - 1500) * 0.02
+        return {'sum': max(30.0, estimated_sum), 'median': max(1.5, estimated_sum/20),
+                'var': 0.0, 'max': max(2.0, estimated_sum/20), 'count_above_50M': 0}
+    if (market_vals <= 0).any():
+        market_vals = market_vals.where(market_vals > 0, known_vals.median())
+    top23 = market_vals.nlargest(23)
+    if len(top23) < 23:
+        pad_val = known_vals.median() if len(known_vals) > 0 else 0.5
+        top23 = pd.concat([top23, pd.Series([pad_val] * (23 - len(top23)))])
+    return {'sum': float(top23.sum()), 'median': float(top23.median()),
+            'var': float(top23.var()) if len(top23) > 1 else 0.0,
+            'max': float(top23.max()), 'count_above_50M': int((top23 > 50).sum())}
+
 if os.path.exists(SQUAD_CACHE_FILE):
     print("Loading squad cache from disk...")
     with open(SQUAD_CACHE_FILE, 'rb') as f:
@@ -289,61 +339,46 @@ else:
         else:
             team_valuations[team] = pd.DataFrame(columns=valuations_df.columns)
 
-    def squad_for_country_fast(country, ref_year):
-        country_players = players_df[players_df['country_of_citizenship'] == country]
-        if country_players.empty:
-            fifa_val = get_fifa_points(country, pd.Timestamp(f'{ref_year}-06-01'))
-            estimated_sum = 50.0 + (fifa_val - 1500) * 0.02
-            return {'sum': max(30.0, estimated_sum), 'median': max(1.5, estimated_sum/20),
-                    'var': 0.0, 'max': max(2.0, estimated_sum/20), 'count_above_50M': 0}
-        val_subset = team_valuations[country][
-            team_valuations[country]['date'] <= pd.Timestamp(f'{ref_year}-06-01')
-        ]
-        latest_vals = (val_subset.sort_values('date').groupby('player_id').last().reset_index()
-                       if not val_subset.empty else pd.DataFrame(columns=['player_id','market_value_in_eur']))
-        squad_df = country_players[['player_id']].merge(latest_vals, on='player_id', how='left')
-        squad_df['market_value_in_eur'] = pd.to_numeric(squad_df['market_value_in_eur'], errors='coerce')
-        market_vals = squad_df['market_value_in_eur'].fillna(0.0) / 1_000_000.0
-        if (market_vals <= 0).any() and value_predictor is not None:
-            missing_mask = market_vals <= 0
-            missing_players = country_players[country_players['player_id'].isin(
-                squad_df.loc[missing_mask, 'player_id'])]
-            if not missing_players.empty:
-                predicted = batch_predict_market_values(missing_players, value_predictor,
-                                                        pd.Timestamp(f'{ref_year}-06-01'))
-                pred_map = dict(zip(missing_players['player_id'], predicted / 1_000_000.0))
-                for pid, val in pred_map.items():
-                    idx = squad_df[squad_df['player_id'] == pid].index
-                    if len(idx) > 0:
-                        market_vals.loc[idx[0]] = val
-        known_vals = market_vals[market_vals > 0]
-        if len(known_vals) == 0:
-            fifa_val = get_fifa_points(country, pd.Timestamp(f'{ref_year}-06-01'))
-            estimated_sum = 50.0 + (fifa_val - 1500) * 0.02
-            return {'sum': max(30.0, estimated_sum), 'median': max(1.5, estimated_sum/20),
-                    'var': 0.0, 'max': max(2.0, estimated_sum/20), 'count_above_50M': 0}
-        if (market_vals <= 0).any():
-            market_vals = market_vals.where(market_vals > 0, known_vals.median())
-        top23 = market_vals.nlargest(23)
-        if len(top23) < 23:
-            pad_val = known_vals.median() if len(known_vals) > 0 else 0.5
-            top23 = pd.concat([top23, pd.Series([pad_val] * (23 - len(top23)))])
-        return {'sum': float(top23.sum()), 'median': float(top23.median()),
-                'var': float(top23.var()) if len(top23) > 1 else 0.0,
-                'max': float(top23.max()), 'count_above_50M': int((top23 > 50).sum())}
-
     t0 = time.time()
     results = Parallel(n_jobs=12, backend='loky', verbose=10, batch_size=50)(
         delayed(squad_for_country_fast)(team, year)
         for team, year in pairs
     )
     squad_cache = {p: r for p, r in zip(pairs, results)}
-    print(f"\n  Squad cache built in {time.time()-t0:.1f}s")
-    current_squad = {team: squad_cache.get((team, CURRENT_YEAR), squad_for_country_up_to_year(team, CURRENT_YEAR)) for team in ALL_TEAMS}
-    print("  Current squad data prepared.")
+    with open(SQUAD_CACHE_FILE, 'wb') as f:
+        pickle.dump(squad_cache, f)
+    print(f"\n  Squad cache built in {time.time()-t0:.1f}s and saved to {SQUAD_CACHE_FILE}")
+
+current_squad = {team: squad_cache.get((team, CURRENT_YEAR), squad_for_country_up_to_year(team, CURRENT_YEAR)) for team in ALL_TEAMS}
+print("  Current squad data prepared.")
+
+# -------------------------------------------------------------------------
+# OVERRIDE current_squad with Transfermarkt actual values
+# -------------------------------------------------------------------------
+print("Loading Transfermarkt squad values for 2026...")
+if os.path.exists(TRANSFERMARKT_FILE):
+    tm_df = pd.read_csv(TRANSFERMARKT_FILE)
+    # Standardize team names
+    tm_df['Team'] = tm_df['Team'].replace(name_map)
+    # Convert EUR values to millions
+    tm_df['TotalValueM'] = tm_df['TotalValueEUR'] / 1_000_000.0
+    tm_df['AvgValueM'] = tm_df['AvgValueEUR'] / 1_000_000.0
+
+    updated = 0
+    for _, row in tm_df.iterrows():
+        team = row['Team']
+        if team in current_squad:
+            current_squad[team]['sum'] = row['TotalValueM']
+            current_squad[team]['median'] = row['AvgValueM']   # using average as proxy for median
+            updated += 1
+        else:
+            print(f"  ⚠️  Team '{team}' not found in current_squad list – skipping")
+    print(f"  Overwritten {updated} teams with Transfermarkt values.")
+else:
+    print(f"  ⚠️  {TRANSFERMARKT_FILE} not found. Using estimated squad values.")
 
 # =========================================================================
-# 5. MODEL DEFINITION (static_dim = 7, FIFA Diff included)
+# 5. MODEL DEFINITION (static_dim = 7, dropped Squad Max Diff)
 # =========================================================================
 class PoissonLoss(nn.Module):
     def forward(self, pred, target, weights=None):
@@ -355,20 +390,18 @@ class PoissonLoss(nn.Module):
         return loss.mean()
 
 class OrderInvariantPredictor(nn.Module):
-    def __init__(self, num_teams, embed_dim=16, hist_len=10, hist_input_dim=4, static_dim=7):
+    def __init__(self, num_teams, embed_dim=16, hist_len=10, hist_input_dim=4, static_dim=7):  # 7 features
         super().__init__()
         self.team_embedding = nn.Embedding(num_teams, embed_dim)
-        self.emb_dropout = nn.Dropout(0.1)          # new embedding dropout
+        self.emb_dropout = nn.Dropout(0.1)
         self.hist_proj = nn.Linear(hist_input_dim, 32)
         encoder_layer = nn.TransformerEncoderLayer(d_model=32, nhead=4, batch_first=True, dropout=0.2)
         self.hist_encoder = nn.TransformerEncoder(encoder_layer, num_layers=2)
-        # Smaller static branch
         self.static_branch = nn.Sequential(
             nn.Linear(static_dim, 32), nn.ReLU(), nn.Dropout(0.2),
             nn.Linear(32, 16), nn.ReLU()
         )
         fusion_dim = embed_dim * 2 + 32 * 2 + 16
-        # Halved MLP sizes + higher dropout
         self.final_mlp = nn.Sequential(
             nn.Linear(fusion_dim, 64), nn.ReLU(), nn.Dropout(0.5),
             nn.Linear(64, 32), nn.ReLU(), nn.Dropout(0.4),
@@ -385,11 +418,23 @@ class OrderInvariantPredictor(nn.Module):
         return self.final_mlp(combined)
 
 # =========================================================================
-# 6. FULL TRAINING PIPELINE (with mirroring & anti‑overfitting)
+# 6. FULL TRAINING PIPELINE (with mirroring & asymmetric dropout)
 # =========================================================================
+def compute_weighted_margin(team, team_history_local, decay=0.8):
+    hist = team_history_local.get(team, [])
+    if not hist:
+        return 0.0
+    recent = hist[-HISTORY_LEN:]
+    weights = np.exp(-decay * np.arange(len(recent))[::-1])
+    weights /= weights.sum()
+    margins = []
+    for m in recent:
+        margin = (m['goals_for'] - m['goals_against']) * (m['opponent_elo'] / 1500.0)
+        margins.append(margin)
+    return float(np.average(margins, weights=weights))
+
 def train_and_save_artifacts():
     print("\n[REQUIRED FILES MISSING] Starting full model training...")
-
     all_teams = sorted(set(results_df['Home Team'].unique()) | set(results_df['Away Team'].unique()))
     team_to_idx_local = {team: i for i, team in enumerate(all_teams)}
     for team in team_to_group:
@@ -431,18 +476,19 @@ def train_and_save_artifacts():
 
         h_squad = squad_cache[(h, year)]
         a_squad = squad_cache[(a, year)]
+        h_margin = compute_weighted_margin(h, team_history_train)
+        a_margin = compute_weighted_margin(a, team_history_train)
 
-        # 7 features: Elo Diff, Squad Sum, Median, Var, Max, Count>50M, FIFA Diff
+        # 7 features: Elo, Sum, Median, Var, Count>50M, FIFA, Weighted Margin
         feat = [
             h_elo_before - a_elo_before,
             (h_squad['sum'] - a_squad['sum']) / 100.0,
             h_squad['median'] - a_squad['median'],
             np.log1p(h_squad['var'] + 1) - np.log1p(a_squad['var'] + 1),
-            (h_squad['max'] - a_squad['max']) / 100.0,
             h_squad['count_above_50M'] - a_squad['count_above_50M'],
             home_fifa - away_fifa,
+            h_margin - a_margin,
         ]
-
         match_info = {
             'teamA_idx': team_to_idx_local[h],
             'teamB_idx': team_to_idx_local[a],
@@ -456,7 +502,6 @@ def train_and_save_artifacts():
         }
         match_data_train.append(match_info)
 
-        # Update Elo (neutral ground)
         h_score, a_score = row['Home Score'], row['Away Score']
         if h_score > a_score: h_res, a_res = 1, 0
         elif h_score < a_score: h_res, a_res = 0, 1
@@ -472,9 +517,7 @@ def train_and_save_artifacts():
                                       'opponent_elo': h_elo_before, 'was_home': False})
     print(f"  Elo training finished in {time.time()-start_t:.1f}s")
 
-    # =====================================================================
-    # BUILD FEATURE MATRICES WITH MIRRORING (7 features)
-    # =====================================================================
+    # Build mirrored dataset
     features_orig, targets_orig, weights_orig, years_orig = [], [], [], []
     seqA_orig, seqB_orig, idxA_orig, idxB_orig = [], [], [], []
     for m in match_data_train:
@@ -487,7 +530,6 @@ def train_and_save_artifacts():
         idxA_orig.append(m['teamA_idx'])
         idxB_orig.append(m['teamB_idx'])
 
-    # Mirrored copies – all 7 signs flipped
     features_mirror, targets_mirror, weights_mirror, years_mirror = [], [], [], []
     seqA_mirror, seqB_mirror, idxA_mirror, idxB_mirror = [], [], [], []
     for i, m in enumerate(match_data_train):
@@ -513,16 +555,15 @@ def train_and_save_artifacts():
     scaler_train = StandardScaler()
     features_scaled = scaler_train.fit_transform(features_all)
 
-    # Time-based split
     train_mask = years_all < 2022
     val_mask   = (years_all >= 2022) & (years_all < 2025)
     print(f"Training samples: {train_mask.sum()}, Validation samples: {val_mask.sum()}")
 
     device_train = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_train = OrderInvariantPredictor(num_teams, EMBEDDING_DIM, HISTORY_LEN, 4,
-                                          features_scaled.shape[1]).to(device_train)
+                                          static_dim=features_scaled.shape[1]).to(device_train)
     criterion = PoissonLoss()
-    optimizer = optim.Adam(model_train.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)  # stronger weight decay
+    optimizer = optim.Adam(model_train.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
     def create_dataloader(idA, idB, sA, sB, static, y, w, bs, shuffle=True):
@@ -540,23 +581,27 @@ def train_and_save_artifacts():
         idxA_all[val_mask], idxB_all[val_mask], seqA_all[val_mask], seqB_all[val_mask],
         features_scaled[val_mask], targets_all[val_mask], weights_all[val_mask], BATCH_SIZE, False)
 
-    # ---- Feature masking helper ----
-    def feature_mask_batch(x, mask_prob=0.15):
-        mask = torch.rand(x.shape, device=x.device) > mask_prob
-        return x * mask.float()
-    # -------------------------------
+    def feature_mask_batch_asymmetric(x, mask_probs):
+        mask = torch.ones_like(x)
+        for i, p in enumerate(mask_probs):
+            keep = torch.rand(x.shape[0], device=x.device) > p
+            mask[:, i] = keep.float()
+        return x * mask
+
+    # Asymmetric dropout: Elo dropped 30% of the time, others 10% (7 features)
+    mask_probs = [0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
     best_val_loss = float('inf')
     patience_counter = 0
     patience = 15
     best_model_state = None
-    print("Training model...")
+    print("Training model with asymmetric dropout (Elo drop 0.3)...")
     for epoch in range(EPOCHS):
         model_train.train()
         train_loss = 0.0
         for batch in train_loader:
             idA, idB, sA, sB, stat, yb, wb = [x.to(device_train) for x in batch]
-            stat = feature_mask_batch(stat, 0.15)   # mask 15% of static features
+            stat = feature_mask_batch_asymmetric(stat, mask_probs)
             optimizer.zero_grad()
             pred = model_train(idA, idB, sA, sB, stat)
             loss = criterion(pred, yb, wb)
@@ -570,13 +615,11 @@ def train_and_save_artifacts():
         with torch.no_grad():
             for batch in val_loader:
                 idA, idB, sA, sB, stat, yb, wb = [x.to(device_train) for x in batch]
-                # No masking on validation
                 val_loss += criterion(model_train(idA, idB, sA, sB, stat), yb, wb).item()
         val_loss /= len(val_loader)
         train_loss /= len(train_loader)
         if epoch % 10 == 0:
             print(f"  Epoch {epoch}: train_loss={train_loss:.4f}, val_loss={val_loss:.4f}")
-
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             best_model_state = model_train.state_dict().copy()
@@ -592,15 +635,11 @@ def train_and_save_artifacts():
     torch.save(best_model_state, MODEL_PATH)
     print(f"  Training complete. Best val loss: {best_val_loss:.4f}")
 
-    # -----------------------------------------------------------------
-    # PERMUTATION FEATURE IMPORTANCE (7 features)
-    # -----------------------------------------------------------------
-    print("  Computing permutation feature importance on validation set...")
+    # Feature importance (7 features)
     feature_names = [
         "Elo Diff", "Squad Sum Diff", "Squad Median Diff", "Squad Var Diff",
-        "Squad Max Diff", "Count >50M Diff", "FIFA Diff"
+        "Count >50M Diff", "FIFA Diff", "Weighted Margin Diff"
     ]
-
     model_train.eval()
     with torch.no_grad():
         base_loss = 0.0
@@ -611,7 +650,6 @@ def train_and_save_artifacts():
 
     importances = {}
     static_val = features_scaled[val_mask].copy()
-
     for i, fname in enumerate(feature_names):
         static_shuf = static_val.copy()
         np.random.shuffle(static_shuf[:, i])
@@ -624,7 +662,6 @@ def train_and_save_artifacts():
             torch.tensor(targets_all[val_mask], dtype=torch.float32),
             torch.tensor(weights_all[val_mask], dtype=torch.float32))
         temp_loader = DataLoader(temp_dataset, batch_size=BATCH_SIZE, shuffle=False, pin_memory=False, num_workers=0)
-
         perm_loss = 0.0
         with torch.no_grad():
             for batch in temp_loader:
@@ -640,12 +677,8 @@ def train_and_save_artifacts():
         f.write("FEATURE IMPORTANCE (Permutation Loss Increase)\n")
         f.write("============================================================\n")
         f.write(f"Baseline validation loss: {base_loss:.6f}\n\n")
-        f.write(f"{'Feature':30s} Importance\n")
-        f.write("-" * 42 + "\n")
         for fname, imp in sorted(importances.items(), key=lambda x: x[1]):
             f.write(f"{fname:30s} {imp:.6f}\n")
-        f.write("-" * 42 + "\n")
-        f.write("\nSorted by importance (lowest to highest).\n")
     print(f"  Feature importance saved to {imp_file}")
 
     with open(TEAM_MAP_FILE, 'wb') as f:
@@ -680,13 +713,13 @@ team_to_idx_model = {team: i for i, team in enumerate(team_list)}
 num_teams = len(team_list)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = OrderInvariantPredictor(num_teams, EMBEDDING_DIM, HISTORY_LEN, 4, 7).to(device)
+model = OrderInvariantPredictor(num_teams, EMBEDDING_DIM, HISTORY_LEN, 4, static_dim=7).to(device)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model.eval()
 print(f"  Model loaded ({num_teams} teams).")
 
 # =========================================================================
-# 8. DYNAMIC ELO & MATCH DATA (7 features)
+# 8. DYNAMIC ELO & MATCH DATA
 # =========================================================================
 print("Computing Elo ratings (dynamic cache)...")
 elo = defaultdict(lambda: 1500.0)
@@ -744,16 +777,18 @@ if start_idx < total_matches:
 
         h_squad = squad_cache[(h, year)]
         a_squad = squad_cache[(a, year)]
+        h_margin = compute_weighted_margin(h, team_history)
+        a_margin = compute_weighted_margin(a, team_history)
 
-        # 7 features
+        # 7 features (no Squad Max)
         feat = [
             h_elo_before - a_elo_before,
             (h_squad['sum'] - a_squad['sum']) / 100.0,
             h_squad['median'] - a_squad['median'],
             np.log1p(h_squad['var'] + 1) - np.log1p(a_squad['var'] + 1),
-            (h_squad['max'] - a_squad['max']) / 100.0,
             h_squad['count_above_50M'] - a_squad['count_above_50M'],
             home_fifa - away_fifa,
+            h_margin - a_margin,
         ]
         match_info = {
             'teamA_seq': np.array(h_seq, dtype=np.float32),
@@ -797,7 +832,7 @@ scaler.fit(features_all)
 print("  Scaler fitted.")
 
 # =========================================================================
-# 10. BATCH PREDICTION HELPERS (7 features)
+# 10. BATCH PREDICTION HELPERS
 # =========================================================================
 def encode_history_batch(teams):
     seqs = []
@@ -816,14 +851,16 @@ def build_features_batch(team_a_list, team_b_list):
     for team_a, team_b in zip(team_a_list, team_b_list):
         squad_a = current_squad[team_a]; squad_b = current_squad[team_b]
         fifa_a = get_fifa_points(team_a, REF_DATE); fifa_b = get_fifa_points(team_b, REF_DATE)
+        margin_a = compute_weighted_margin(team_a, team_history)
+        margin_b = compute_weighted_margin(team_b, team_history)
         feat = [
             elo[team_a] - elo[team_b],
             (squad_a['sum'] - squad_b['sum']) / 100.0,
             squad_a['median'] - squad_b['median'],
             np.log1p(squad_a['var']+1) - np.log1p(squad_b['var']+1),
-            (squad_a['max'] - squad_b['max']) / 100.0,
             squad_a['count_above_50M'] - squad_b['count_above_50M'],
             fifa_a - fifa_b,
+            margin_a - margin_b,
         ]
         feats.append(feat)
     return np.array(feats, dtype=np.float32)
@@ -862,18 +899,17 @@ else:
 print(f"Alive teams: {len(alive_teams)}")
 
 # =========================================================================
-# 13. TRAIN OUTCOME CALIBRATION MODEL (symmetric xG → Win/Draw/Loss)
+# 13. CALIBRATION (Poisson simulation instead of logistic regression)
 # =========================================================================
-print("\nTraining outcome calibration model on historical data...")
+print("\nEvaluating Poisson‑based calibration on historical data...")
 cal_matches = [m for m in match_data if m['year'] >= 2019 and 'teamA_name' in m]
 if len(cal_matches) == 0:
     cal_matches = [m for m in match_data if 'teamA_name' in m]
 
-print(f"  Using {len(cal_matches)} matches for calibration.")
+print(f"  Using {len(cal_matches)} matches for calibration evaluation.")
 teamA_names = [m['teamA_name'] for m in cal_matches]
 teamB_names = [m['teamB_name'] for m in cal_matches]
 
-# Predict symmetric xG for calibration matches
 fwd_feats = np.array([m['features'] for m in cal_matches], dtype=np.float32)
 fwd_feats_scaled = scaler.transform(fwd_feats)
 fwd_seqA = np.array([m['teamA_seq'] for m in cal_matches], dtype=np.float32)
@@ -881,7 +917,6 @@ fwd_seqB = np.array([m['teamB_seq'] for m in cal_matches], dtype=np.float32)
 fwd_idA = [team_to_idx_model[n] for n in teamA_names]
 fwd_idB = [team_to_idx_model[n] for n in teamB_names]
 
-# Reversed order (7 features all negated)
 rev_feats = -fwd_feats
 rev_feats_scaled = scaler.transform(rev_feats)
 rev_seqA = fwd_seqB
@@ -909,43 +944,39 @@ pred_BA_cal = preds[N_cal:]
 xG_A_sym = (pred_AB_cal[:, 0] + pred_BA_cal[:, 1]) / 2.0
 xG_B_sym = (pred_AB_cal[:, 1] + pred_BA_cal[:, 0]) / 2.0
 
+# Build actual outcomes from cal_matches (home win=0, draw=1, away win=2)
 y_cal_orig = []
-for i, m in enumerate(cal_matches):
+for m in cal_matches:
     if m['target_A'] > m['target_B']:
-        y_cal_orig.append(0)
+        y_cal_orig.append(0)   # home win
     elif m['target_A'] < m['target_B']:
-        y_cal_orig.append(2)
+        y_cal_orig.append(2)   # away win
     else:
-        y_cal_orig.append(1)
-y_cal_orig = np.array(y_cal_orig)
+        y_cal_orig.append(1)   # draw
 
-X_cal_mirror = np.column_stack([xG_B_sym, xG_A_sym])
-y_cal_mirror = np.where(y_cal_orig == 0, 2, np.where(y_cal_orig == 2, 0, 1))
-X_cal_sym = np.vstack([np.column_stack([xG_A_sym, xG_B_sym]), X_cal_mirror])
-y_cal_sym = np.concatenate([y_cal_orig, y_cal_mirror])
+# Poisson simulation for calibration accuracy
+rng_cal = np.random.RandomState(POISSON_RANDOM_SEED)
+correct = 0
+total_cal = len(cal_matches)
+for i in range(total_cal):
+    actual = y_cal_orig[i]
+    goalsA = rng_cal.poisson(xG_A_sym[i], POISSON_SIMULATIONS)
+    goalsB = rng_cal.poisson(xG_B_sym[i], POISSON_SIMULATIONS)
+    home_win = np.sum(goalsA > goalsB)
+    draw = np.sum(goalsA == goalsB)
+    away_win = np.sum(goalsA < goalsB)
+    probs = np.array([home_win, draw, away_win]) / POISSON_SIMULATIONS
+    pred_class = np.argmax(probs)
+    if pred_class == actual:
+        correct += 1
 
-X_cal_ext = np.column_stack([
-    X_cal_sym[:, 0], X_cal_sym[:, 1],
-    X_cal_sym[:, 0] - X_cal_sym[:, 1],
-    X_cal_sym[:, 0] + X_cal_sym[:, 1],
-    (X_cal_sym[:, 0] - X_cal_sym[:, 1]) ** 2,
-    X_cal_sym[:, 0] * X_cal_sym[:, 1]
-])
-
-cal_model = LogisticRegression(solver='lbfgs', max_iter=1000)
-cal_model.fit(X_cal_ext, y_cal_sym)
-print(f"  Calibration model trained on {len(X_cal_sym)} symmetrical samples.")
-
-if len(y_cal_sym) > 0:
-    from sklearn.metrics import accuracy_score
-    pred_labels = cal_model.predict(X_cal_ext)
-    acc = accuracy_score(y_cal_sym, pred_labels)
-    print(f"  Calibration accuracy on training data: {acc:.3f}")
+acc_poisson = correct / total_cal if total_cal > 0 else 0.0
+print(f"  Poisson calibration accuracy on training data: {acc_poisson:.3f}")
 
 # =========================================================================
-# 14. SYMMETRIC xG & CALIBRATED PROBABILITIES FOR ALL KNOCKOUT PAIRS
+# 14. SYMMETRIC xG & POISSON PROBABILITIES FOR ALL KNOCKOUT PAIRS
 # =========================================================================
-print("\nGenerating symmetric xG & calibrated probabilities for knockout pairs...")
+print("\nGenerating symmetric xG & Poisson probabilities for knockout pairs...")
 t_pred = time.time()
 
 unique_pairs = []
@@ -977,9 +1008,9 @@ N = len(unique_pairs)
 pred_AB = predictions[:N]
 pred_BA = predictions[N:]
 
-rows_xg = []
 rows_prob = []
-debug_data = []
+debug_rows = []
+rng_prob = np.random.RandomState(POISSON_RANDOM_SEED)
 
 for idx, (team_a, team_b) in enumerate(unique_pairs):
     if (team_a, team_b) in played_pairs:
@@ -1007,30 +1038,17 @@ for idx, (team_a, team_b) in enumerate(unique_pairs):
         xG_b = (pred_AB[idx][1] + pred_BA[idx][0]) / 2.0
         is_played = 0
 
-        X_dir = np.array([[xG_a, xG_b,
-                           xG_a - xG_b,
-                           xG_a + xG_b,
-                           (xG_a - xG_b) ** 2,
-                           xG_a * xG_b]])
-        probs_dir = cal_model.predict_proba(X_dir)[0]
-        X_swap = np.array([[xG_b, xG_a,
-                            xG_b - xG_a,
-                            xG_b + xG_a,
-                            (xG_b - xG_a) ** 2,
-                            xG_b * xG_a]])
-        probs_swap = cal_model.predict_proba(X_swap)[0]
+        # Poisson simulation for this pair
+        goalsA = rng_prob.poisson(xG_a, POISSON_SIMULATIONS)
+        goalsB = rng_prob.poisson(xG_b, POISSON_SIMULATIONS)
+        home_win = np.sum(goalsA > goalsB)
+        draw = np.sum(goalsA == goalsB)
+        away_win = np.sum(goalsA < goalsB)
+        total_sim = POISSON_SIMULATIONS
+        p_home = home_win / total_sim
+        p_draw = draw / total_sim
+        p_away = away_win / total_sim
 
-        p_home = (probs_dir[0] + probs_swap[2]) / 2.0
-        p_draw = (probs_dir[1] + probs_swap[1]) / 2.0
-        p_away = (probs_dir[2] + probs_swap[0]) / 2.0
-
-    rows_xg.append({
-        'Home_Team': team_a,
-        'Away_Team': team_b,
-        'Home_xG': round(float(xG_a), 2),
-        'Away_xG': round(float(xG_b), 2),
-        'Is_Played': is_played
-    })
     rows_prob.append({
         'Home_Team': team_a,
         'Away_Team': team_b,
@@ -1042,45 +1060,33 @@ for idx, (team_a, team_b) in enumerate(unique_pairs):
         'Is_Played': is_played
     })
 
-    squad_a = current_squad[team_a]; squad_b = current_squad[team_b]
-    debug_entry = {
+    # Debug info: feature differences (now 7 features) + final numbers
+    debug_rows.append({
         'Team_A': team_a,
         'Team_B': team_b,
-        'Elo_A': elo[team_a], 'Elo_B': elo[team_b],
-        'Elo_Diff': elo[team_a] - elo[team_b],
-        'Squad_Sum_A': squad_a['sum'], 'Squad_Sum_B': squad_b['sum'],
-        'Squad_Sum_Diff': (squad_a['sum'] - squad_b['sum']) / 100.0,
-        'Squad_Median_Diff': squad_a['median'] - squad_b['median'],
-        'Squad_Var_Diff': np.log1p(squad_a['var']+1) - np.log1p(squad_b['var']+1),
-        'Squad_Max_Diff': (squad_a['max'] - squad_b['max']) / 100.0,
-        'Count_50M_Diff': squad_a['count_above_50M'] - squad_b['count_above_50M'],
-        'FIFA_Diff': features_batch[idx][6],
-        'xG_A_forward': float(pred_AB[idx][0]),
-        'xG_B_forward': float(pred_AB[idx][1]),
-        'xG_A_reversed': float(pred_BA[idx][1]),
-        'xG_B_reversed': float(pred_BA[idx][0]),
+        'Elo_Diff': features_batch[idx][0],
+        'Squad_Sum_Diff': features_batch[idx][1],
+        'Squad_Median_Diff': features_batch[idx][2],
+        'Squad_Var_Diff': features_batch[idx][3],
+        'Count_50M_Diff': features_batch[idx][4],
+        'FIFA_Diff': features_batch[idx][5],
+        'Margin_Diff': features_batch[idx][6],
         'xG_A_final': float(xG_a),
         'xG_B_final': float(xG_b),
         'p_Home_Win': p_home,
         'p_Draw': p_draw,
         'p_Away_Win': p_away,
-    }
-    debug_data.append(debug_entry)
+    })
 
 # Save outputs
-out_xg_df = pd.DataFrame(rows_xg)
-out_xg_csv = f"{OUTPUT_DIR}knockout_xg_lookup.csv"
-out_xg_df.to_csv(out_xg_csv, index=False)
-print(f"✅ xG lookup table saved ({len(out_xg_df)} rows) -> {out_xg_csv}")
-
 out_prob_df = pd.DataFrame(rows_prob)
 out_prob_csv = f"{OUTPUT_DIR}knockout_prob_lookup.csv"
 out_prob_df.to_csv(out_prob_csv, index=False)
 print(f"✅ Probability lookup table saved ({len(out_prob_df)} rows) -> {out_prob_csv}")
 
-debug_df = pd.DataFrame(debug_data)
+debug_df = pd.DataFrame(debug_rows)
 debug_csv = f"{OUTPUT_DIR}prediction_debug.csv"
 debug_df.to_csv(debug_csv, index=False)
-print(f"✅ Detailed debug file saved -> {debug_csv}")
+print(f"✅ Minimal debug file saved -> {debug_csv}")
 
 print(f"Total runtime: {time.time()-t_start:.1f}s")
