@@ -1,4 +1,4 @@
-// Compile: g++ -std=c++20 simulate_knockout.cpp -o simulate_knockout
+// Compile: g++ -std=c++20 -fopenmp simulate_knockout.cpp -o simulate_knockout
 // Run: ./simulate_knockout
 
 #include <iostream>
@@ -7,12 +7,14 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <random>
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
 #include <tuple>
 #include <array>
+#include <omp.h>
 
 using namespace std;
 
@@ -29,11 +31,16 @@ struct ProbInfo {
     double p_home_win, p_draw, p_away_win;
 };
 
+struct KnockoutMatch {
+    int home_goals, away_goals;
+    string date;                // YYYY-MM-DD
+};
+
 enum SlotType { TEAM, WINNER };
 struct Slot {
     SlotType type;
-    string team_name;   // TEAM
-    int match_id;       // WINNER
+    string team_name;           // TEAM
+    int match_id;               // WINNER
 };
 
 struct BracketMatch {
@@ -58,14 +65,12 @@ struct MatchResult {
 };
 
 // ---------------------------------------------------------
-// GLOBAL STATE
+// GLOBAL STATE (read‑only after loading)
 // ---------------------------------------------------------
-mt19937 rng(random_device{}());
-
-unordered_map<string, pair<double,double>> xg_table;   // key -> {home_xg, away_xg}
+unordered_map<string, pair<double,double>> xg_table;
 unordered_map<string, ProbInfo> prob_table;
-unordered_map<string, int> alive_status;                // 0=alive, 1=out
-unordered_map<string, pair<int,int>> actual_scores;     // only knockout matches
+unordered_map<string, int> alive_status;
+unordered_map<string, KnockoutMatch> actual_scores;
 
 // ---------------------------------------------------------
 // MATH HELPERS
@@ -97,11 +102,11 @@ pair<int,int> most_likely_score(double home_xg, double away_xg, int max_goals = 
 }
 
 // ---------------------------------------------------------
-// PENALTY SHOOTOUT (75% base, ±10% by xG)
+// PENALTY SHOOTOUT (thread‑safe: uses a local RNG)
 // ---------------------------------------------------------
-bool penalty_shootout_winner(const string& t1, const string& t2,
-                             double home_xg, double away_xg,
-                             bool t1_is_home) {
+bool penalty_shootout_winner_local(const string& t1, const string& t2,
+                                   double home_xg, double away_xg,
+                                   bool t1_is_home, mt19937& rng) {
     double diff = home_xg - away_xg;
     double probA = clamp(0.75 + diff * 0.05, 0.65, 0.85);
     double probB = clamp(0.75 - diff * 0.05, 0.65, 0.85);
@@ -133,7 +138,7 @@ void load_prob_csv(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) { cerr << "Error opening " << filename << endl; exit(1); }
     string line;
-    getline(file, line);  // skip header
+    getline(file, line);
     while (getline(file, line)) {
         if (line.empty()) continue;
         stringstream ss(line);
@@ -153,13 +158,11 @@ void load_prob_csv(const string& filename) {
         double p_draw = stod(pd);
         double p_away = stod(paw);
 
-        // Store xG
         string key = home + "|" + away;
         xg_table[key] = {hx, ax};
         key = away + "|" + home;
         xg_table[key] = {ax, hx};
 
-        // Store probabilities
         key = home + "|" + away;
         prob_table[key] = {p_home, p_draw, p_away};
         key = away + "|" + home;
@@ -199,21 +202,21 @@ void load_actual_results(const string& filename) {
         getline(ss, ag_str, ',');
         getline(ss, tournament, ',');
         if (tournament != "FIFA World Cup") continue;
-        if (date < "2026-06-28") continue;          // knockout only
+        if (date < "2026-06-28") continue;
         if (hg_str == "NA" || ag_str == "NA") continue;
 
         int hg = stoi(hg_str);
         int ag = stoi(ag_str);
         string key = home + "|" + away;
-        actual_scores[key] = {hg, ag};
+        actual_scores[key] = {hg, ag, date};
         key = away + "|" + home;
-        actual_scores[key] = {ag, hg};
+        actual_scores[key] = {ag, hg, date};
     }
     cout << "Loaded " << actual_scores.size() / 2 << " knockout results.\n";
 }
 
 // ---------------------------------------------------------
-// HELPERS
+// HELPERS (thread‑safe – only read global data)
 // ---------------------------------------------------------
 bool is_eliminated(const string& team) {
     return alive_status.count(team) && alive_status[team] == 1;
@@ -224,18 +227,35 @@ bool get_actual_result(const string& t1, const string& t2,
     string key = t1 + "|" + t2;
     auto it = actual_scores.find(key);
     if (it == actual_scores.end()) return false;
-    goals1 = it->second.first;
-    goals2 = it->second.second;
-    if (goals1 > goals2) {
-        winner = t1;
-    } else if (goals2 > goals1) {
-        winner = t2;
-    } else {
-        if (is_eliminated(t1) && !is_eliminated(t2)) winner = t2;
-        else if (!is_eliminated(t1) && is_eliminated(t2)) winner = t1;
-        else winner = t1;   // fallback (shouldn't happen)
+
+    goals1 = it->second.home_goals;
+    goals2 = it->second.away_goals;
+
+    if (goals1 > goals2) { winner = t1; return true; }
+    if (goals2 > goals1) { winner = t2; return true; }
+
+    string draw_date = it->second.date;
+    bool t1_later = false, t2_later = false;
+    for (const auto& [k, m] : actual_scores) {
+        if (m.date > draw_date) {
+            size_t sep = k.find('|');
+            string h = k.substr(0, sep);
+            string a = k.substr(sep + 1);
+            if (h == t1 || a == t1) t1_later = true;
+            if (h == t2 || a == t2) t2_later = true;
+        }
     }
-    return true;
+    if (t1_later && !t2_later) { winner = t1; return true; }
+    if (!t1_later && t2_later) { winner = t2; return true; }
+
+    bool t1_out = is_eliminated(t1);
+    bool t2_out = is_eliminated(t2);
+    if (!t1_out && t2_out) { winner = t1; return true; }
+    if (t1_out && !t2_out) { winner = t2; return true; }
+
+    cerr << "Error: draw between " << t1 << " and " << t2
+         << " and no definitive advancement data.\n";
+    return false;
 }
 
 MatchInfo get_match(const string& t1, const string& t2) {
@@ -263,10 +283,11 @@ ProbInfo get_prob(const string& t1, const string& t2) {
 }
 
 // ---------------------------------------------------------
-// RANDOM MATCH (Monte Carlo) – returns winner and sets score by reference
+// RANDOM MATCH – thread‑safe version (uses a local RNG)
 // ---------------------------------------------------------
-string random_match_winner(const string& t1, const string& t2,
-                           int& goals1, int& goals2, bool& pens) {
+string random_match_winner_local(const string& t1, const string& t2,
+                                 int& goals1, int& goals2, bool& pens,
+                                 mt19937& rng) {
     int g1, g2; string w;
     if (get_actual_result(t1, t2, g1, g2, w)) {
         goals1 = g1; goals2 = g2;
@@ -283,7 +304,8 @@ string random_match_winner(const string& t1, const string& t2,
     MatchInfo info = get_match(t1, t2);
     poisson_distribution<int> home_goals(info.home_xg);
     poisson_distribution<int> away_goals(info.away_xg);
-    goals1 = home_goals(rng); goals2 = away_goals(rng);
+    goals1 = home_goals(rng);
+    goals2 = away_goals(rng);
     pens = false;
     if (goals1 != goals2)
         return (goals1 > goals2) ? info.home : info.away;
@@ -291,19 +313,21 @@ string random_match_winner(const string& t1, const string& t2,
     // extra time
     poisson_distribution<int> et_home(info.home_xg * 0.5);
     poisson_distribution<int> et_away(info.away_xg * 0.5);
-    goals1 += et_home(rng); goals2 += et_away(rng);
+    goals1 += et_home(rng);
+    goals2 += et_away(rng);
     if (goals1 != goals2)
         return (goals1 > goals2) ? info.home : info.away;
 
     // penalties
     pens = true;
-    return penalty_shootout_winner(info.home, info.away,
-                                   info.home_xg, info.away_xg, true)
+    return penalty_shootout_winner_local(info.home, info.away,
+                                         info.home_xg, info.away_xg, true, rng)
                ? info.home : info.away;
 }
 
 // ---------------------------------------------------------
-// DETERMINISTIC MATCH (most‑likely score, used for display)
+// DETERMINISTIC MATCH (unchanged, uses original global‑dependent
+// get_actual_result which is safe)
 // ---------------------------------------------------------
 void deterministic_display_match(int matchId, const string& phase,
                                  const string& t1, const string& t2,
@@ -365,7 +389,7 @@ void deterministic_display_match(int matchId, const string& phase,
 }
 
 // ---------------------------------------------------------
-// BRACKET RESOLVER HELPER
+// BRACKET RESOLVER
 // ---------------------------------------------------------
 string resolve_slot(const Slot& slot, const unordered_map<int,string>& winners) {
     if (slot.type == TEAM)
@@ -428,62 +452,86 @@ int main() {
     };
 
     // ---------------------------------------------------------
-    // 1. MONTE CARLO SIMULATION + FREQUENCY COUNTING
+    // 1. MONTE CARLO SIMULATION (OpenMP parallel)
     // ---------------------------------------------------------
-    const int SIMS = 100000;
-    cout << "\nRunning " << SIMS << " Monte Carlo simulations...\n";
+    const int SIMS = 1000000;
+    cout << "\nRunning " << SIMS << " Monte Carlo simulations";
+    cout << " on " << omp_get_max_threads() << " threads...\n";
 
-    // Team stats: R16, QF, SF, Final, Champion
+    // Global accumulators (will be filled after parallel section)
     unordered_map<string, array<int,5>> team_stats;
-    for (const auto& m : bracket)
-        if (m.phase == "R32") {
-            team_stats[m.team1.team_name] = {0};
-            team_stats[m.team2.team_name] = {0};
-        }
-
     unordered_map<int, unordered_map<string,int>> winner_counts;
 
-    for (int sim = 0; sim < SIMS; ++sim) {
-        unordered_map<int,string> mc_winners;
-        unordered_map<int,string> mc_losers;
+    #pragma omp parallel
+    {
+        // Each thread has its own RNG and local counters
+        mt19937 local_rng(random_device{}() + omp_get_thread_num());
+        unordered_map<string, array<int,5>> local_team_stats;
+        unordered_map<int, unordered_map<string,int>> local_winner_counts;
 
-        for (const auto& m : bracket) {
-            if (m.phase == "3rd") continue;
-            string t1 = resolve_slot(m.team1, mc_winners);
-            string t2 = resolve_slot(m.team2, mc_winners);
+        // Initialize local team stats with all R32 teams
+        for (const auto& m : bracket)
+            if (m.phase == "R32") {
+                local_team_stats[m.team1.team_name] = {0};
+                local_team_stats[m.team2.team_name] = {0};
+            }
+
+        #pragma omp for schedule(static)
+        for (int sim = 0; sim < SIMS; ++sim) {
+            unordered_map<int,string> mc_winners;
+            unordered_map<int,string> mc_losers;
+
+            for (const auto& m : bracket) {
+                if (m.phase == "3rd") continue;
+                string t1 = resolve_slot(m.team1, mc_winners);
+                string t2 = resolve_slot(m.team2, mc_winners);
+                int g1, g2; bool pens;
+                string winner = random_match_winner_local(t1, t2, g1, g2, pens, local_rng);
+                mc_winners[m.id] = winner;
+                mc_losers[m.id] = (winner == t1) ? t2 : t1;
+
+                if (m.phase == "R32")      local_team_stats[winner][0]++;
+                else if (m.phase == "R16") local_team_stats[winner][1]++;
+                else if (m.phase == "QF")  local_team_stats[winner][2]++;
+                else if (m.phase == "SF")  local_team_stats[winner][3]++;
+            }
+
+            // 3rd place and final
+            int sf1 = 101, sf2 = 102;
+            string t1 = mc_losers[sf1];
+            string t2 = mc_losers[sf2];
             int g1, g2; bool pens;
-            string winner = random_match_winner(t1, t2, g1, g2, pens);
-            mc_winners[m.id] = winner;
-            mc_losers[m.id] = (winner == t1) ? t2 : t1;
+            string third = random_match_winner_local(t1, t2, g1, g2, pens, local_rng);
+            mc_winners[103] = third;
 
-            if (m.phase == "R32")      team_stats[winner][0]++;
-            else if (m.phase == "R16") team_stats[winner][1]++;
-            else if (m.phase == "QF")  team_stats[winner][2]++;
-            else if (m.phase == "SF")  team_stats[winner][3]++;
+            string finalist1 = mc_winners[101];
+            string finalist2 = mc_winners[102];
+            string champion = random_match_winner_local(finalist1, finalist2, g1, g2, pens, local_rng);
+            mc_winners[104] = champion;
+            local_team_stats[champion][4]++;
+
+            for (const auto& m : bracket) {
+                local_winner_counts[m.id][mc_winners[m.id]]++;
+            }
         }
 
-        // 3rd place and final
-        int sf1 = 101, sf2 = 102;
-        string t1 = mc_losers[sf1];
-        string t2 = mc_losers[sf2];
-        int g1, g2; bool pens;
-        string third = random_match_winner(t1, t2, g1, g2, pens);
-        mc_winners[103] = third;
-        mc_losers[103] = (third == t1) ? t2 : t1;
+        // Merge thread‑local results into global structures
+        #pragma omp critical
+        {
+            for (const auto& [team, stats] : local_team_stats)
+                for (int i = 0; i < 5; ++i)
+                    team_stats[team][i] += stats[i];
 
-        string finalist1 = mc_winners[101];
-        string finalist2 = mc_winners[102];
-        string champion = random_match_winner(finalist1, finalist2, g1, g2, pens);
-        mc_winners[104] = champion;
-        team_stats[champion][4]++;
-
-        for (const auto& m : bracket) {
-            winner_counts[m.id][mc_winners[m.id]]++;
+            for (const auto& [match_id, counts] : local_winner_counts)
+                for (const auto& [team, count] : counts)
+                    winner_counts[match_id][team] += count;
         }
     }
 
+    cout << "Simulation complete.\n";
+
     // ---------------------------------------------------------
-    // 2. BUILD CONSENSUS BRACKET
+    // 2. BUILD CONSENSUS BRACKET (sequential)
     // ---------------------------------------------------------
     unordered_map<int,string> consensus_winners;
     for (const auto& m : bracket) {
@@ -534,7 +582,7 @@ int main() {
     }
 
     // ---------------------------------------------------------
-    // 3. DISPLAY CONSENSUS BRACKET WITH DETERMINISTIC SCORES
+    // 3. DISPLAY CONSENSUS BRACKET
     // ---------------------------------------------------------
     cout << "\n============================================================\n";
     cout << "  CONSENSUS BRACKET (most frequent winner at each stage)\n";

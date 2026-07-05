@@ -5,10 +5,10 @@ Australia: 1823.62
 Austria: 1840.69
 Belgium: 1906.24
 Bosnia and Herzegovina: 1612.87
-Brazil: 1998.78
-Canada: 1834.44
+Brazil: 1975.78
+Canada: 1820.94
 Cape Verde: 1645.33
-Colombia: 1970.10
+Colombia: 1974.03
 Croatia: 1874.51
 Curaçao: 1540.85
 Czech Republic: 1732.54
@@ -16,9 +16,9 @@ DR Congo: 1716.09
 Ecuador: 1884.15
 Egypt: 1797.84
 England: 1973.51
-France: 2039.03
+France: 2046.63
 Germany: 1940.79
-Ghana: 1609.42
+Ghana: 1605.49
 Haiti: 1601.14
 Iran: 1842.37
 Iraq: 1680.69
@@ -26,12 +26,12 @@ Ivory Coast: 1803.47
 Japan: 1928.00
 Jordan: 1675.92
 Mexico: 1951.36
-Morocco: 1961.69
+Morocco: 1975.19
 Netherlands: 1946.53
 New Zealand: 1622.21
-Norway: 1888.48
+Norway: 1911.49
 Panama: 1698.53
-Paraguay: 1814.87
+Paraguay: 1807.28
 Portugal: 1980.00
 Qatar: 1558.57
 Saudi Arabia: 1675.34

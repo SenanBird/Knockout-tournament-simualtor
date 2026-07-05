@@ -2,16 +2,16 @@ Mexico,0
 South Africa,1
 South Korea,1
 Czech Republic,1
-Canada,0
+Canada,1
 Bosnia and Herzegovina,1
 Qatar,1
 Switzerland,0
-Brazil,0
+Brazil,1
 Morocco,0
 Haiti,1
 Scotland,1
 United States,0
-Paraguay,0
+Paraguay,1
 Australia,1
 Turkey,1
 Germany,1
