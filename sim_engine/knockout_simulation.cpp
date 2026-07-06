@@ -454,7 +454,7 @@ int main() {
     // ---------------------------------------------------------
     // 1. MONTE CARLO SIMULATION (OpenMP parallel)
     // ---------------------------------------------------------
-    const int SIMS = 1000000;
+    const int SIMS = 5000000;
     cout << "\nRunning " << SIMS << " Monte Carlo simulations";
     cout << " on " << omp_get_max_threads() << " threads...\n";
 
