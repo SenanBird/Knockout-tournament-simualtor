@@ -78,60 +78,45 @@ def encode_history_batch(teams, team_history):
 # ---------------------------------------------------------------------------
 def build_features_batch(team_a_list, team_b_list, current_squad, elo, team_history,
                          ref_dates=None):
-    if ref_dates is None:
-        ref_dates = [config.REF_DATE] * len(team_a_list)
     """
-    For each pair (team_a, team_b) construct the 7‑dimensional feature vector:
-      [elo_diff, sum_diff/100, median_diff, var_diff, count50M_diff,
-       fifa_diff, weighted_margin_diff]
-    Uses the passed `current_squad` dict (from the squad cache), `elo` dict,
-    and `team_history`.
-
-    Returns a float32 array of shape (len(team_a_list), 7).
+    For each pair (team_a, team_b) construct the 8‑dimensional feature vector:
+      [elo_diff, sum_diff/100, median_diff, var_diff(log1p), count50M_diff,
+       margin_diff, age_avg_diff, value_per_cap_ratio_diff]
     """
     feats = []
-    for team_a, team_b, ref_date in zip(team_a_list, team_b_list, ref_dates):
+    for i, (team_a, team_b) in enumerate(zip(team_a_list, team_b_list)):
         squad_a = current_squad[team_a]
         squad_b = current_squad[team_b]
-        fifa_a = get_fifa_points(team_a, ref_date)
-        fifa_b = get_fifa_points(team_b, ref_date)
+        
+        # FIFA points not used; if still needed for margin, we ignore
         margin_a = compute_weighted_margin(team_a, team_history)
         margin_b = compute_weighted_margin(team_b, team_history)
-
-        # ----- new features -----
-        # age
-        age_avg_diff = squad_a['age_avg'] - squad_b['age_avg']
-        age_var_diff = squad_a['age_var'] - squad_b['age_var']
-
-        # value per cap
-        cap_a = squad_a['caps_sum'] + 1e-6
-        cap_b = squad_b['caps_sum'] + 1e-6
-        ratio_a = squad_a['sum'] / cap_a
-        ratio_b = squad_b['sum'] / cap_b
-        ratio_diff = ratio_a - ratio_b
-
-        # days since last match
-        days_a = get_days_since_last_match(team_a, team_history, ref_date)
-        days_b = get_days_since_last_match(team_b, team_history, ref_date)
-        days_diff = days_a - days_b
-
+        
+        # Age
+        age_avg_a = squad_a.get('age_avg', 26.0)
+        age_avg_b = squad_b.get('age_avg', 26.0)
+        
+        # Value per cap ratio
+        sum_a = squad_a['sum']
+        sum_b = squad_b['sum']
+        caps_a = squad_a.get('caps_sum', 0.0) + 1e-6
+        caps_b = squad_b.get('caps_sum', 0.0) + 1e-6
+        ratio_a = sum_a / caps_a
+        ratio_b = sum_b / caps_b
+        
         feat = [
             elo[team_a] - elo[team_b],
-            (squad_a['sum'] - squad_b['sum']) / 100.0,
+            (sum_a - sum_b) / 100.0,
             squad_a['median'] - squad_b['median'],
             np.log1p(squad_a['var'] + 1) - np.log1p(squad_b['var'] + 1),
             squad_a['count_above_50M'] - squad_b['count_above_50M'],
-            fifa_a - fifa_b,
             margin_a - margin_b,
-            age_avg_diff,
-            age_var_diff,
-            days_diff,
-            ratio_diff,
+            age_avg_a - age_avg_b,
+            ratio_a - ratio_b,
         ]
         feats.append(feat)
-
+    
     return np.array(feats, dtype=np.float32)
-
 
 # ---------------------------------------------------------------------------
 # 4. Asymmetric feature dropout (used during training)

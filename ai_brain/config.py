@@ -39,7 +39,7 @@ TRANSFERMARKT_FILE = f"{DATA_DIR}transfermarkt_squad_values_2026.csv"
 # ---------------------------------------------------------------------------
 # Run‑time flags
 # ---------------------------------------------------------------------------
-FORCE_FRESH = True                 # Delete caches and retrain with current features
+FORCE_FRESH = True                # Delete caches and retrain with current features
 
 # ---------------------------------------------------------------------------
 # Modelling & training hyperparameters
@@ -123,23 +123,83 @@ ALL_TEAMS = sorted(team_to_group.keys())
 NUM_STATIC_FEATURES = 11
 
 # Replace the old FEATURE_NAMES list
+
+NUM_STATIC_FEATURES = 8
+
+# New feature names (only 8)
 FEATURE_NAMES = [
     "Elo Diff",
     "Squad Sum Diff",
     "Squad Median Diff",
     "Squad Var Diff",
     "Count >50M Diff",
-    "FIFA Diff",
     "Weighted Margin Diff",
     "Age Avg Diff",
-    "Age Var Diff",
-    "DaysSinceLastMatch Diff",
     "ValuePerCapRatio Diff",
 ]
 
-# Extend MASK_PROBS – drop Elo with 0.5, others with 0.1
-MASK_PROBS = [0.5, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+# Dropout probabilities (8 entries)
+MASK_PROBS = [0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
 
 
 
+# Tournament → K weight (World Football Elo system)
+K_WEIGHTS = {
+    # Finals of top tournaments
+    "FIFA World Cup": 60,
+    # Continental championships & intercontinental
+    "UEFA Euro": 50,
+    "Copa América": 50,
+    "African Cup of Nations": 50,
+    "AFC Asian Cup": 50,
+    "Gold Cup": 50,
+    "Oceania Nations Cup": 50,
+    "Confederations Cup": 50,        # intercontinental
+    "CONMEBOL–UEFA Cup of Champions": 50,  # Finalissima
+    # Qualifiers for World Cup & continental championships
+    "FIFA World Cup qualification": 40,
+    "UEFA Euro qualification": 40,
+    "AFC Asian Cup qualification": 40,
+    "African Cup of Nations qualification": 40,
+    "Copa América qualification": 40,
+    "Gold Cup qualification": 40,
+    "Oceania Nations Cup qualification": 40,
+    # Major tournaments (league stages of continental comps, etc.)
+    "UEFA Nations League": 40,
+    "CONCACAF Nations League": 40,
+    "CONCACAF Nations League qualification": 40,
+    # All other tournaments
+    "Friendly": 20,
+}
 
+def get_K(tournament_name: str) -> int:
+    """Return Elo K-weight for a given tournament string."""
+    # Exact match
+    if tournament_name in K_WEIGHTS:
+        return K_WEIGHTS[tournament_name]
+    # Fallback: guess by keywords
+    t = tournament_name.lower()
+    if "world cup" in t and "qualif" in t:
+        return 40
+    if "world cup" in t:
+        return 60
+    if any(comp in t for comp in ["euro", "copa américa", "asian cup",
+                                  "african cup", "gold cup", "oceania"]):
+        if "qualif" in t:
+            return 40
+        return 50
+    if "nations league" in t:
+        return 40
+    if "friendly" in t:
+        return 20
+    # Default for all other tournaments (King's Cup, etc.)
+    return 30
+
+def goal_difference_multiplier(goal_diff: int) -> float:
+    """Official World Football Elo goal-difference multiplier."""
+    if goal_diff <= 1:
+        return 1.0
+    if goal_diff == 2:
+        return 1.5
+    # goal_diff >= 3
+    return (11 + goal_diff) / 8.0

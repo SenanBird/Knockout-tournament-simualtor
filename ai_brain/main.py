@@ -50,6 +50,10 @@ alive_teams = []
 # ---------------------------------------------------------------------------
 # SYSTEM / HARDWARE INFORMATION LOGGING
 # ---------------------------------------------------------------------------
+
+
+
+
 def print_system_info():
     """Print detailed system and hardware information."""
     print("\n" + "=" * 70)
@@ -94,9 +98,6 @@ def print_gpu_memory(label=""):
               f"total={total:.1f} GB ({pct:.1f}% used)")
 
 
-# ---------------------------------------------------------------------------
-# 1. TRAINING & ARTIFACT GENERATION
-# ---------------------------------------------------------------------------
 def train_and_save_artifacts(results_df, players_df, valuations_df, squad_cache):
     """Run the full training pipeline."""
     print("\n" + "=" * 70)
@@ -115,23 +116,11 @@ def train_and_save_artifacts(results_df, players_df, valuations_df, squad_cache)
     print(f"  Historical matches: {len(results_df):,}")
     print_gpu_memory("before training")
 
-    # Helper to compute days since last match for a given team before a specific date
-    def _days_since_last_match(team, history, ref_date):
-        matches = history.get(team, [])
-        if not matches:
-            return 30.0
-        for m in reversed(matches):
-            if m['date'] < ref_date:
-                days = (ref_date - m['date']).days
-                return min(days, 30.0)
-        return 30.0
-
     # Elo computation
     print(f"\nComputing Elo from scratch for {num_teams} teams...")
     elo_train = defaultdict(lambda: 1500.0)
     team_history_train = defaultdict(list)
     match_data_train = []
-    K = config.ELO_K
     total = len(results_df)
     start_t = time.time()
 
@@ -164,28 +153,11 @@ def train_and_save_artifacts(results_df, players_df, valuations_df, squad_cache)
             h_squad['median'] - a_squad['median'],
             np.log1p(h_squad['var'] + 1) - np.log1p(a_squad['var'] + 1),
             h_squad['count_above_50M'] - a_squad['count_above_50M'],
-            home_fifa - away_fifa,
             h_margin - a_margin,
+            h_squad.get('age_avg', 26.0) - a_squad.get('age_avg', 26.0),
+            (h_squad['sum'] / (h_squad.get('caps_sum', 0.0) + 1e-6)) -
+            (a_squad['sum'] / (a_squad.get('caps_sum', 0.0) + 1e-6)),
         ]
-
-        # --- new features ---
-        # Age
-        age_avg_diff = h_squad.get('age_avg', 26.0) - a_squad.get('age_avg', 26.0)
-        age_var_diff = h_squad.get('age_var', 4.0) - a_squad.get('age_var', 4.0)
-
-        # Value per cap ratio
-        cap_h = h_squad.get('caps_sum', 0.0) + 1e-6
-        cap_a = a_squad.get('caps_sum', 0.0) + 1e-6
-        ratio_h = h_squad['sum'] / cap_h
-        ratio_a = a_squad['sum'] / cap_a
-        ratio_diff = ratio_h - ratio_a
-
-        # Days since last match
-        days_h = _days_since_last_match(h, team_history_train, match_date)
-        days_a = _days_since_last_match(a, team_history_train, match_date)
-        days_diff = days_h - days_a
-
-        feat.extend([age_avg_diff, age_var_diff, days_diff, ratio_diff])
 
         match_info = {
             'teamA_idx': team_to_idx[h],
@@ -200,28 +172,50 @@ def train_and_save_artifacts(results_df, players_df, valuations_df, squad_cache)
         }
         match_data_train.append(match_info)
 
-        # Elo update
+        # --- OFFICIAL ELO UPDATE (home advantage, tournament K, goal multiplier) ---
         h_score, a_score = row['Home Score'], row['Away Score']
-        if h_score > a_score:
-            h_res, a_res = 1, 0
-        elif h_score < a_score:
-            h_res, a_res = 0, 1
-        else:
-            h_res, a_res = 0.5, 0.5
-        h_exp = 1 / (1 + 10**((a_elo_before - h_elo_before) / 400))
-        a_exp = 1 / (1 + 10**((h_elo_before - a_elo_before) / 400))
-        K_adj = K * (1 + min(abs(h_score - a_score), 4) / 10)
-        elo_train[h] += K_adj * (h_res - h_exp)
-        elo_train[a] += K_adj * (a_res - a_exp)
 
+        # 1. Home advantage: add 100 points to home team if not neutral
+        neutral = row.get('neutral', True)   # True if neutral venue
+        home_adv = 0 if neutral else 100
+
+        # 2. Expected results (with home advantage)
+        dr = (h_elo_before + home_adv) - a_elo_before
+        h_exp = 1.0 / (1.0 + 10.0 ** (-dr / 400.0))
+        a_exp = 1.0 - h_exp
+
+        # 3. Match result
+        if h_score > a_score:
+            W_h, W_a = 1.0, 0.0
+        elif h_score < a_score:
+            W_h, W_a = 0.0, 1.0
+        else:
+            W_h, W_a = 0.5, 0.5
+
+        # 4. Goal difference multiplier G
+        goal_diff = abs(h_score - a_score)
+        G = config.goal_difference_multiplier(goal_diff)
+
+        # 5. Tournament weight K
+        K = config.get_K(row['Tournament'])
+
+        # 6. Points change
+        P = K * G * (W_h - h_exp)
+
+        elo_train[h] += P
+        elo_train[a] -= P   # symmetric
+
+        # Update history (store home status correctly)
         team_history_train[h].append({
             'goals_for': h_score, 'goals_against': a_score,
-            'opponent_elo': a_elo_before, 'was_home': False,
+            'opponent_elo': a_elo_before,
+            'was_home': not neutral,      # True if home, False if neutral
             'date': match_date
         })
         team_history_train[a].append({
             'goals_for': a_score, 'goals_against': h_score,
-            'opponent_elo': h_elo_before, 'was_home': False,
+            'opponent_elo': h_elo_before,
+            'was_home': False,            # away team never home
             'date': match_date
         })
 
@@ -246,8 +240,6 @@ def train_and_save_artifacts(results_df, players_df, valuations_df, squad_cache)
     features_mirror, targets_mirror, weights_mirror, years_mirror = [], [], [], []
     seqA_mirror, seqB_mirror, idxA_mirror, idxB_mirror = [], [], [], []
     for i, m in enumerate(match_data_train):
-        # Mirror features: sign flip for most, but days diff should flip sign, ratio diff also flips, age diffs flip, etc.
-        # Since the whole feature vector is a diff (teamA - teamB), we can simply negate it.
         features_mirror.append(-m['features'])
         targets_mirror.append([m['target_B_goals'], m['target_A_goals']])
         weights_mirror.append(m['weight'])
@@ -456,17 +448,6 @@ def compute_elo_and_match_data(results_df, squad_cache, start_idx=0):
     print("DYNAMIC ELO COMPUTATION")
     print("=" * 70)
 
-    # Helper to compute days since last match
-    def _days_since_last_match(team, history, ref_date):
-        matches = history.get(team, [])
-        if not matches:
-            return 30.0
-        for m in reversed(matches):
-            if m['date'] < ref_date:
-                days = (ref_date - m['date']).days
-                return min(days, 30.0)
-        return 30.0
-
     if os.path.exists(config.ELO_CACHE_FILE):
         print("  Loading cached Elo state...")
         with open(config.ELO_CACHE_FILE, 'rb') as f:
@@ -487,7 +468,6 @@ def compute_elo_and_match_data(results_df, squad_cache, start_idx=0):
         print("  No new matches found. Elo state up to date.")
         return start_idx
 
-    K = config.ELO_K
     start_elo = time.time()
     new_matches = total - start_idx
 
@@ -524,25 +504,11 @@ def compute_elo_and_match_data(results_df, squad_cache, start_idx=0):
             h_squad['median'] - a_squad['median'],
             np.log1p(h_squad['var'] + 1) - np.log1p(a_squad['var'] + 1),
             h_squad['count_above_50M'] - a_squad['count_above_50M'],
-            home_fifa - away_fifa,
             h_margin - a_margin,
+            h_squad.get('age_avg', 26.0) - a_squad.get('age_avg', 26.0),
+            (h_squad['sum'] / (h_squad.get('caps_sum', 0.0) + 1e-6)) -
+            (a_squad['sum'] / (a_squad.get('caps_sum', 0.0) + 1e-6)),
         ]
-
-        # New features (with fallback defaults if old squad cache lacks keys)
-        age_avg_diff = h_squad.get('age_avg', 26.0) - a_squad.get('age_avg', 26.0)
-        age_var_diff = h_squad.get('age_var', 4.0) - a_squad.get('age_var', 4.0)
-
-        cap_h = h_squad.get('caps_sum', 0.0) + 1e-6
-        cap_a = a_squad.get('caps_sum', 0.0) + 1e-6
-        ratio_h = h_squad['sum'] / cap_h
-        ratio_a = a_squad['sum'] / cap_a
-        ratio_diff = ratio_h - ratio_a
-
-        days_h = _days_since_last_match(h, team_history, match_date)
-        days_a = _days_since_last_match(a, team_history, match_date)
-        days_diff = days_h - days_a
-
-        feat.extend([age_avg_diff, age_var_diff, days_diff, ratio_diff])
 
         match_info = {
             'teamA_seq': np.array(h_seq, dtype=np.float32),
@@ -557,28 +523,50 @@ def compute_elo_and_match_data(results_df, squad_cache, start_idx=0):
         }
         match_data.append(match_info)
 
-        # Elo update
+        # --- OFFICIAL ELO UPDATE (same as training function) ---
         h_score, a_score = row['Home Score'], row['Away Score']
-        if h_score > a_score:
-            h_res, a_res = 1, 0
-        elif h_score < a_score:
-            h_res, a_res = 0, 1
-        else:
-            h_res, a_res = 0.5, 0.5
-        h_exp = 1 / (1 + 10**((a_elo_before - h_elo_before) / 400))
-        a_exp = 1 / (1 + 10**((h_elo_before - a_elo_before) / 400))
-        K_adj = K * (1 + min(abs(h_score - a_score), 4) / 10)
-        elo[h] += K_adj * (h_res - h_exp)
-        elo[a] += K_adj * (a_res - a_exp)
 
+        # 1. Home advantage
+        neutral = row.get('neutral', True)
+        home_adv = 0 if neutral else 100
+
+        # 2. Expected results
+        dr = (h_elo_before + home_adv) - a_elo_before
+        h_exp = 1.0 / (1.0 + 10.0 ** (-dr / 400.0))
+        a_exp = 1.0 - h_exp
+
+        # 3. Match result
+        if h_score > a_score:
+            W_h, W_a = 1.0, 0.0
+        elif h_score < a_score:
+            W_h, W_a = 0.0, 1.0
+        else:
+            W_h, W_a = 0.5, 0.5
+
+        # 4. Goal difference multiplier
+        goal_diff = abs(h_score - a_score)
+        G = config.goal_difference_multiplier(goal_diff)
+
+        # 5. Tournament weight K
+        K = config.get_K(row['Tournament'])
+
+        # 6. Points change
+        P = K * G * (W_h - h_exp)
+
+        elo[h] += P
+        elo[a] -= P
+
+        # Update history (store home status correctly)
         team_history[h].append({
             'goals_for': h_score, 'goals_against': a_score,
-            'opponent_elo': a_elo_before, 'was_home': False,
+            'opponent_elo': a_elo_before,
+            'was_home': not neutral,
             'date': match_date
         })
         team_history[a].append({
             'goals_for': a_score, 'goals_against': h_score,
-            'opponent_elo': h_elo_before, 'was_home': False,
+            'opponent_elo': h_elo_before,
+            'was_home': False,
             'date': match_date
         })
 
@@ -596,6 +584,9 @@ def compute_elo_and_match_data(results_df, squad_cache, start_idx=0):
     print(f"  Elo state cached to {config.ELO_CACHE_FILE}")
 
     return total
+
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -731,12 +722,9 @@ def generate_probability_lookups(alive_teams, current_squad, results_df):
             'Squad_Median_Diff': f[2],
             'Squad_Var_Diff': f[3],
             'Count_50M_Diff': f[4],
-            'FIFA_Diff': f[5],
-            'Margin_Diff': f[6],
-            'Age_Avg_Diff': f[7],
-            'Age_Var_Diff': f[8],
-            'DaysSinceLast_Diff': f[9],
-            'ValuePerCap_Diff': f[10],
+            'Margin_Diff': f[5],          # shifted index
+            'Age_Avg_Diff': f[6],
+            'ValuePerCap_Diff': f[7],
             'xG_A_final': float(xG_a),
             'xG_B_final': float(xG_b),
             'p_Home_Win': p_home,
@@ -842,6 +830,15 @@ def main():
 
     # --- Dynamic Elo & match data ---
     compute_elo_and_match_data(results_df, squad_cache)
+     # --- Save Elo rankings (all teams) ---
+    elo_rankings_file = config.OUTPUT_DIR + "elo_rankings.txt"
+    sorted_teams = sorted(elo.items(), key=lambda x: x[1], reverse=True)
+    with open(elo_rankings_file, 'w', encoding='utf-8') as f:
+        f.write("ELO RANKINGS (all teams)\n")
+        f.write("="*40 + "\n")
+        for rank, (team, rating) in enumerate(sorted_teams, 1):
+            f.write(f"{rank:4d}. {team:30s} {rating:.2f}\n")
+    print(f"  ✅ Elo rankings saved to {elo_rankings_file}")
 
     # --- Alive teams ---
     alive_teams = []

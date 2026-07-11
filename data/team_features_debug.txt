@@ -1,99 +1,99 @@
 ELO RATINGS (as of 2026-06-01)
-Algeria: 1845.01
-Argentina: 2094.84
-Australia: 1823.62
-Austria: 1840.69
-Belgium: 1906.24
-Bosnia and Herzegovina: 1612.87
-Brazil: 1975.78
-Canada: 1820.94
-Cape Verde: 1645.33
-Colombia: 1974.03
-Croatia: 1874.51
-Curaçao: 1540.85
-Czech Republic: 1732.54
-DR Congo: 1716.09
-Ecuador: 1884.15
-Egypt: 1797.84
-England: 1989.99
-France: 2046.63
-Germany: 1940.79
-Ghana: 1605.49
-Haiti: 1601.14
-Iran: 1842.37
-Iraq: 1680.69
-Ivory Coast: 1803.47
-Japan: 1928.00
-Jordan: 1675.92
-Mexico: 1934.88
-Morocco: 1975.19
-Netherlands: 1946.53
-New Zealand: 1622.21
-Norway: 1911.49
-Panama: 1698.53
-Paraguay: 1807.28
-Portugal: 1980.00
-Qatar: 1558.57
-Saudi Arabia: 1675.34
-Scotland: 1743.51
-Senegal: 1816.32
-South Africa: 1668.67
-South Korea: 1812.81
-Spain: 2078.09
-Sweden: 1741.37
-Switzerland: 1895.92
-Tunisia: 1661.01
-Turkey: 1850.37
-United States: 1857.49
-Uruguay: 1838.74
-Uzbekistan: 1729.75
+Algeria: 1840.88
+Argentina: 2194.02
+Australia: 1895.96
+Austria: 1855.37
+Belgium: 1989.44
+Bosnia and Herzegovina: 1640.55
+Brazil: 2040.05
+Canada: 1856.42
+Cape Verde: 1681.94
+Colombia: 2049.23
+Croatia: 1906.23
+Curaçao: 1596.65
+Czech Republic: 1721.58
+DR Congo: 1795.68
+Ecuador: 1916.21
+Egypt: 1848.80
+England: 2108.17
+France: 2196.78
+Germany: 1972.19
+Ghana: 1668.05
+Haiti: 1636.09
+Iran: 1885.14
+Iraq: 1671.39
+Ivory Coast: 1840.35
+Japan: 1969.80
+Jordan: 1712.01
+Mexico: 2030.64
+Morocco: 2033.59
+Netherlands: 2022.79
+New Zealand: 1676.89
+Norway: 2009.45
+Panama: 1747.34
+Paraguay: 1856.73
+Portugal: 2021.01
+Qatar: 1566.22
+Saudi Arabia: 1714.63
+Scotland: 1795.79
+Senegal: 1855.10
+South Africa: 1703.52
+South Korea: 1836.64
+Spain: 2209.33
+Sweden: 1765.49
+Switzerland: 1985.13
+Tunisia: 1642.30
+Turkey: 1880.67
+United States: 1903.21
+Uruguay: 1881.35
+Uzbekistan: 1734.82
 
 CURRENT SQUAD SUMS & MEDIANS (M€)
-Algeria: Sum = 251.90 | Median = 10.08 | Age Avg = 26.5521530815701 | Caps Sum = 727.0
-Argentina: Sum = 807.50 | Median = 31.06 | Age Avg = 25.0380025592953 | Caps Sum = 467.0
-Australia: Sum = 77.45 | Median = 2.98 | Age Avg = 26.84903133648781 | Caps Sum = 391.0
-Austria: Sum = 245.20 | Median = 9.43 | Age Avg = 26.230038984614467 | Caps Sum = 586.0
-Belgium: Sum = 547.50 | Median = 21.06 | Age Avg = 23.665744129988397 | Caps Sum = 414.0
-Bosnia and Herzegovina: Sum = 146.40 | Median = 5.63 | Age Avg = 26.376692557212156 | Caps Sum = 432.0
-Brazil: Sum = 928.20 | Median = 35.70 | Age Avg = 24.80290450257418 | Caps Sum = 356.0
-Canada: Sum = 198.65 | Median = 7.64 | Age Avg = 26.445972085825666 | Caps Sum = 760.0
-Cape Verde: Sum = 54.50 | Median = 2.10 | Age Avg = 27.32958366812487 | Caps Sum = 316.0
-Colombia: Sum = 302.35 | Median = 11.63 | Age Avg = 27.559086986280985 | Caps Sum = 598.0
-Croatia: Sum = 387.30 | Median = 14.90 | Age Avg = 26.119929768175453 | Caps Sum = 692.0
-Curaçao: Sum = 25.78 | Median = 0.99 | Age Avg = 26.923667529684852 | Caps Sum = 369.0
-Czech Republic: Sum = 188.18 | Median = 7.24 | Age Avg = 25.959825015623604 | Caps Sum = 566.0
-DR Congo: Sum = 143.90 | Median = 5.53 | Age Avg = 26.14409427729667 | Caps Sum = 356.0
-Ecuador: Sum = 368.70 | Median = 14.18 | Age Avg = 24.505073951730502 | Caps Sum = 578.0
-Egypt: Sum = 116.48 | Median = 4.48 | Age Avg = 29.06847602892599 | Caps Sum = 825.0
-England: Sum = 1360.00 | Median = 52.24 | Age Avg = 25.1112103086034 | Caps Sum = 628.0
-France: Sum = 1520.00 | Median = 58.58 | Age Avg = 24.5933993988632 | Caps Sum = 580.0
-Germany: Sum = 947.00 | Median = 36.42 | Age Avg = 24.189387852275104 | Caps Sum = 470.0
-Ghana: Sum = 234.35 | Median = 9.01 | Age Avg = 24.70148498645954 | Caps Sum = 316.0
-Haiti: Sum = 55.85 | Median = 2.15 | Age Avg = 27.73835669434276 | Caps Sum = 528.0
-Iran: Sum = 32.05 | Median = 1.23 | Age Avg = 29.452727435050445 | Caps Sum = 772.0
-Iraq: Sum = 21.20 | Median = 0.81 | Age Avg = 25.952563759188166 | Caps Sum = 630.0
-Ivory Coast: Sum = 522.10 | Median = 20.08 | Age Avg = 23.85691753712466 | Caps Sum = 474.0
-Japan: Sum = 270.85 | Median = 10.42 | Age Avg = 26.605362616433062 | Caps Sum = 619.0
-Jordan: Sum = 20.30 | Median = 0.78 | Age Avg = 27.581227866559537 | Caps Sum = 906.0
-Mexico: Sum = 191.85 | Median = 7.38 | Age Avg = 25.757938279320303 | Caps Sum = 667.0
-Morocco: Sum = 447.70 | Median = 17.22 | Age Avg = 24.86944618040056 | Caps Sum = 627.0
-Netherlands: Sum = 754.20 | Median = 29.01 | Age Avg = 25.79198285867333 | Caps Sum = 580.0
-New Zealand: Sum = 34.30 | Median = 1.32 | Age Avg = 28.6629170014582 | Caps Sum = 599.0
-Norway: Sum = 589.90 | Median = 22.69 | Age Avg = 25.294765348331996 | Caps Sum = 700.0
-Panama: Sum = 34.55 | Median = 1.33 | Age Avg = 27.09484272237598 | Caps Sum = 876.0
-Paraguay: Sum = 153.65 | Median = 5.91 | Age Avg = 27.10662738445972 | Caps Sum = 511.0
-Portugal: Sum = 1010.00 | Median = 38.67 | Age Avg = 25.92482814034461 | Caps Sum = 838.0
-Qatar: Sum = 19.93 | Median = 0.77 | Age Avg = 27.85667946314317 | Caps Sum = 929.0
-Saudi Arabia: Sum = 40.68 | Median = 1.56 | Age Avg = 25.95601583191977 | Caps Sum = 639.0
-Scotland: Sum = 170.25 | Median = 6.55 | Age Avg = 26.58988780763622 | Caps Sum = 680.0
-Senegal: Sum = 478.10 | Median = 18.39 | Age Avg = 24.20962414070172 | Caps Sum = 484.0
-South Africa: Sum = 49.25 | Median = 1.89 | Age Avg = 26.80677320477339 | Caps Sum = 301.0
-South Korea: Sum = 139.05 | Median = 5.35 | Age Avg = 27.00592209028956 | Caps Sum = 793.0
-Spain: Sum = 1220.00 | Median = 47.03 | Age Avg = 24.503526470850808 | Caps Sum = 501.0
-Sweden: Sum = 409.08 | Median = 15.73 | Age Avg = 25.028241526054217 | Caps Sum = 527.0
-Switzerland: Sum = 332.50 | Median = 12.79 | Age Avg = 25.46546439306015 | Caps Sum = 790.0
-Tunisia: Sum = 69.95 | Median = 2.69 | Age Avg = 27.213760676130104 | Caps Sum = 780.0
-Turkey: Sum = 473.70 | Median = 18.22 | Age Avg = 25.865190607981425 | Caps Sum = 718.0
-United States: Sum = 385.65 | Median = 14.83 | Age Avg = 25.45034669523554 | Caps Sum = 768.0
-Uruguay: Sum = 359.30 | Median = 13.82 | Age Avg = 27.342796774097543 | Caps Sum = 695.0
-Uzbekistan: Sum = 85.13 | Median = 3.27 | Age Avg = 28.495550992470907 | Caps Sum = 924.0
+Algeria: Sum = 251.90 | Median = 10.08 | Age Avg = 27.281968871826916 | Caps Sum = 774.0
+Argentina: Sum = 807.50 | Median = 31.06 | Age Avg = 26.96878254917716 | Caps Sum = 711.0
+Australia: Sum = 77.45 | Median = 2.98 | Age Avg = 24.14629646162545 | Caps Sum = 456.0
+Austria: Sum = 245.20 | Median = 9.43 | Age Avg = 27.693717822813436 | Caps Sum = 862.0
+Belgium: Sum = 547.50 | Median = 21.06 | Age Avg = 25.806981519507186 | Caps Sum = 855.0
+Bosnia and Herzegovina: Sum = 146.40 | Median = 5.63 | Age Avg = 27.772520310686556 | Caps Sum = 610.0
+Brazil: Sum = 928.20 | Median = 35.70 | Age Avg = 27.259827991548374 | Caps Sum = 700.0
+Canada: Sum = 198.65 | Median = 7.64 | Age Avg = 27.248043329464632 | Caps Sum = 972.0
+Cape Verde: Sum = 54.50 | Median = 2.10 | Age Avg = 28.111061512364966 | Caps Sum = 382.0
+Colombia: Sum = 302.35 | Median = 11.63 | Age Avg = 28.876588399845254 | Caps Sum = 791.0
+Croatia: Sum = 387.30 | Median = 14.90 | Age Avg = 27.23221140969556 | Caps Sum = 824.0
+Curaçao: Sum = 25.78 | Median = 0.99 | Age Avg = 27.8827485641163 | Caps Sum = 367.0
+Czech Republic: Sum = 188.18 | Median = 7.24 | Age Avg = 27.75311728119513 | Caps Sum = 646.0
+DR Congo: Sum = 143.90 | Median = 5.53 | Age Avg = 27.47897509150968 | Caps Sum = 629.0
+Ecuador: Sum = 368.70 | Median = 14.18 | Age Avg = 25.321310597268102 | Caps Sum = 734.0
+Egypt: Sum = 116.48 | Median = 4.48 | Age Avg = 29.40130345504866 | Caps Sum = 898.0
+England: Sum = 1360.00 | Median = 52.24 | Age Avg = 26.05553075618248 | Caps Sum = 663.0
+France: Sum = 1520.00 | Median = 58.58 | Age Avg = 25.33345237032408 | Caps Sum = 660.0
+Germany: Sum = 947.00 | Median = 36.42 | Age Avg = 25.62640240454721 | Caps Sum = 615.0
+Ghana: Sum = 234.35 | Median = 9.01 | Age Avg = 27.16971698955451 | Caps Sum = 458.0
+Haiti: Sum = 55.85 | Median = 2.15 | Age Avg = 28.228074874267175 | Caps Sum = 531.0
+Iran: Sum = 32.05 | Median = 1.23 | Age Avg = 30.285391185310846 | Caps Sum = 896.0
+Iraq: Sum = 21.20 | Median = 0.81 | Age Avg = 26.489896735410525 | Caps Sum = 741.0
+Ivory Coast: Sum = 522.10 | Median = 20.08 | Age Avg = 25.18751301967086 | Caps Sum = 578.0
+Japan: Sum = 270.85 | Median = 10.42 | Age Avg = 27.427670148498645 | Caps Sum = 713.0
+Jordan: Sum = 20.30 | Median = 0.78 | Age Avg = 28.4146058387644 | Caps Sum = 953.0
+Mexico: Sum = 191.85 | Median = 7.38 | Age Avg = 27.380531500163674 | Caps Sum = 1099.0
+Morocco: Sum = 447.70 | Median = 17.22 | Age Avg = 25.391661458798318 | Caps Sum = 723.0
+Netherlands: Sum = 754.20 | Median = 29.01 | Age Avg = 25.92756599113174 | Caps Sum = 634.0
+New Zealand: Sum = 34.30 | Median = 1.32 | Age Avg = 25.619379222093265 | Caps Sum = 557.0
+Norway: Sum = 589.90 | Median = 22.69 | Age Avg = 26.535249828884325 | Caps Sum = 736.0
+Panama: Sum = 34.55 | Median = 1.33 | Age Avg = 28.46293485700681 | Caps Sum = 1231.0
+Paraguay: Sum = 153.65 | Median = 5.91 | Age Avg = 27.622890813320236 | Caps Sum = 619.0
+Portugal: Sum = 1010.00 | Median = 38.67 | Age Avg = 25.40701723060441 | Caps Sum = 757.0
+Qatar: Sum = 19.93 | Median = 0.77 | Age Avg = 30.2234919501235 | Caps Sum = 1427.0
+Saudi Arabia: Sum = 40.68 | Median = 1.56 | Age Avg = 24.56447341011219 | Caps Sum = 431.0
+Scotland: Sum = 170.25 | Median = 6.55 | Age Avg = 27.31994167187453 | Caps Sum = 762.0
+Senegal: Sum = 478.10 | Median = 18.39 | Age Avg = 26.164925750677018 | Caps Sum = 802.0
+South Africa: Sum = 49.25 | Median = 1.89 | Age Avg = 29.27095795018302 | Caps Sum = 372.0
+South Korea: Sum = 139.05 | Median = 5.35 | Age Avg = 26.86950569889593 | Caps Sum = 823.0
+Spain: Sum = 1220.00 | Median = 47.03 | Age Avg = 25.86530964497217 | Caps Sum = 614.0
+Sweden: Sum = 409.08 | Median = 15.73 | Age Avg = 26.00434485016219 | Caps Sum = 635.0
+Switzerland: Sum = 332.50 | Median = 12.79 | Age Avg = 27.207689789602117 | Caps Sum = 971.0
+Tunisia: Sum = 69.95 | Median = 2.69 | Age Avg = 27.93821980180341 | Caps Sum = 887.0
+Turkey: Sum = 473.70 | Median = 18.22 | Age Avg = 26.75999166741065 | Caps Sum = 825.0
+United States: Sum = 385.65 | Median = 14.83 | Age Avg = 25.540814808201652 | Caps Sum = 826.0
+Uruguay: Sum = 359.30 | Median = 13.82 | Age Avg = 27.309585453679734 | Caps Sum = 667.0
+Uzbekistan: Sum = 85.13 | Median = 3.27 | Age Avg = 28.609826503585985 | Caps Sum = 929.0

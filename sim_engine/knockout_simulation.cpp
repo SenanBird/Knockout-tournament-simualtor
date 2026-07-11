@@ -107,28 +107,9 @@ pair<int,int> most_likely_score(double home_xg, double away_xg, int max_goals = 
 bool penalty_shootout_winner_local(const string& t1, const string& t2,
                                    double home_xg, double away_xg,
                                    bool t1_is_home, mt19937& rng) {
-    double diff = home_xg - away_xg;
-    double probA = clamp(0.75 + diff * 0.05, 0.65, 0.85);
-    double probB = clamp(0.75 - diff * 0.05, 0.65, 0.85);
-    if (!t1_is_home) swap(probA, probB);
-
-    uniform_real_distribution<double> dist(0.0, 1.0);
-    auto shoot = [&](double p) { return dist(rng) < p; };
-
-    int scoreA = 0, scoreB = 0;
-    for (int round = 0; round < 5; ++round) {
-        if (shoot(probA)) scoreA++;
-        if (shoot(probB)) scoreB++;
-        int remainA = 5 - round - 1;
-        int remainB = (round < 4) ? 5 - round - 1 : 0;
-        if (scoreA > scoreB + remainB) return true;
-        if (scoreB > scoreA + remainA) return false;
-    }
-    while (true) {
-        bool a = shoot(probA), b = shoot(probB);
-        if (a && !b) return true;
-        if (!a && b) return false;
-    }
+    // 50/50 chance – ignores xG and home advantage
+    bernoulli_distribution coin(0.5);
+    return coin(rng);  // true => t1 wins, false => t2 wins
 }
 
 // ---------------------------------------------------------

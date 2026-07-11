@@ -7,10 +7,10 @@ Bosnia and Herzegovina,1
 Qatar,1
 Switzerland,0
 Brazil,1
-Morocco,0
+Morocco,1
 Haiti,1
 Scotland,1
-United States,0
+United States,1
 Paraguay,1
 Australia,1
 Turkey,1
@@ -22,8 +22,8 @@ Netherlands,1
 Japan,1
 Sweden,1
 Tunisia,1
-Belgium,0
-Egypt,0
+Belgium,1
+Egypt,1
 Iran,1
 New Zealand,1
 Spain,0
@@ -38,10 +38,10 @@ Argentina,0
 Algeria,1
 Austria,1
 Jordan,1
-Portugal,0
+Portugal,1
 DR Congo,1
 Uzbekistan,1
-Colombia,0
+Colombia,1
 England,0
 Croatia,1
 Ghana,1
