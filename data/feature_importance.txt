@@ -1,13 +1,13 @@
 ============================================================
 FEATURE IMPORTANCE (Permutation Loss Increase)
 ============================================================
-Baseline validation loss: 1.012857
+Baseline validation loss: 1.013186
 
-Age Avg Diff                   0.000712
-Weighted Margin Diff           0.002875
-Count >50M Diff                0.012482
-ValuePerCapRatio Diff          0.018034
-Elo Diff                       0.020178
-Squad Sum Diff                 0.024384
-Squad Median Diff              0.024667
-Squad Var Diff                 0.027741
+Age Avg Diff                   0.001949
+Weighted Margin Diff           0.002805
+Count >50M Diff                0.006054
+Squad Median Diff              0.011920
+ValuePerCapRatio Diff          0.016291
+Elo Diff                       0.016547
+Squad Sum Diff                 0.018298
+Squad Var Diff                 0.025555

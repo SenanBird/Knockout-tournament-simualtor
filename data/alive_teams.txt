@@ -5,7 +5,7 @@ Czech Republic,1
 Canada,1
 Bosnia and Herzegovina,1
 Qatar,1
-Switzerland,0
+Switzerland,1
 Brazil,1
 Morocco,1
 Haiti,1
@@ -33,7 +33,7 @@ Uruguay,1
 France,0
 Senegal,1
 Iraq,1
-Norway,0
+Norway,1
 Argentina,0
 Algeria,1
 Austria,1

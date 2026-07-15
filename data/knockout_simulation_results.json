@@ -1,9 +1,9 @@
 {
   "consensus_bracket": {
-    "champion": "France",
-    "runner_up": "England",
-    "third": "Spain",
-    "fourth": "Argentina"
+    "champion": "Spain",
+    "runner_up": "Argentina",
+    "third": "France",
+    "fourth": "England"
   },
   "matches": [
     {"id":73,"phase":"R32","team1":"South Africa","team2":"Canada","home_xg":0,"away_xg":1,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"0-1","ET":false,"pens":false,"winner":"Canada","loser":"South Africa"},
@@ -32,11 +32,11 @@
     {"id":96,"phase":"R16","team1":"Switzerland","team2":"Colombia","home_xg":0,"away_xg":0,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"0-0","ET":false,"pens":true,"winner":"Switzerland","loser":"Colombia"},
     {"id":97,"phase":"QF","team1":"France","team2":"Morocco","home_xg":2,"away_xg":0,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"2-0","ET":false,"pens":false,"winner":"France","loser":"Morocco"},
     {"id":98,"phase":"QF","team1":"Spain","team2":"Belgium","home_xg":2,"away_xg":1,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"2-1","ET":false,"pens":false,"winner":"Spain","loser":"Belgium"},
-    {"id":99,"phase":"QF","team1":"Norway","team2":"England","home_xg":0.76,"away_xg":1.63,"is_played":false,"90min_probs":{"t1":0.1735,"draw":0.24514,"t2":0.58136},"score":"0-1","ET":false,"pens":false,"winner":"England","loser":"Norway"},
-    {"id":100,"phase":"QF","team1":"Argentina","team2":"Switzerland","home_xg":1.34,"away_xg":0.88,"is_played":false,"90min_probs":{"t1":0.47302,"draw":0.2811,"t2":0.24588},"score":"1-0","ET":false,"pens":false,"winner":"Argentina","loser":"Switzerland"},
-    {"id":101,"phase":"SF","team1":"France","team2":"Spain","home_xg":1.35,"away_xg":0.88,"is_played":false,"90min_probs":{"t1":0.47478,"draw":0.2825,"t2":0.24272},"score":"1-0","ET":false,"pens":false,"winner":"France","loser":"Spain"},
-    {"id":102,"phase":"SF","team1":"England","team2":"Argentina","home_xg":1.44,"away_xg":0.83,"is_played":false,"90min_probs":{"t1":0.509,"draw":0.27032,"t2":0.22068},"score":"1-0","ET":false,"pens":false,"winner":"England","loser":"Argentina"},
-    {"id":104,"phase":"Final","team1":"France","team2":"England","home_xg":1.29,"away_xg":0.93,"is_played":false,"90min_probs":{"t1":0.44976,"draw":0.28314,"t2":0.2671},"score":"1-0","ET":false,"pens":false,"winner":"France","loser":"England"},
-    {"id":103,"phase":"3rd","team1":"Spain","team2":"Argentina","home_xg":1.47,"away_xg":0.83,"is_played":false,"90min_probs":{"t1":0.5215,"draw":0.2655,"t2":0.213},"score":"1-0","ET":false,"pens":false,"winner":"Spain","loser":"Argentina"}
+    {"id":99,"phase":"QF","team1":"Norway","team2":"England","home_xg":1,"away_xg":2,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"1-2","ET":false,"pens":false,"winner":"England","loser":"Norway"},
+    {"id":100,"phase":"QF","team1":"Argentina","team2":"Switzerland","home_xg":3,"away_xg":1,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"3-1","ET":false,"pens":false,"winner":"Argentina","loser":"Switzerland"},
+    {"id":101,"phase":"SF","team1":"France","team2":"Spain","home_xg":0,"away_xg":2,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"0-2","ET":false,"pens":false,"winner":"Spain","loser":"France"},
+    {"id":102,"phase":"SF","team1":"England","team2":"Argentina","home_xg":1,"away_xg":2,"is_played":true,"90min_probs":{"t1":0,"draw":0,"t2":0},"score":"1-2","ET":false,"pens":false,"winner":"Argentina","loser":"England"},
+    {"id":104,"phase":"Final","team1":"Spain","team2":"Argentina","home_xg":1.43,"away_xg":0.82,"is_played":false,"90min_probs":{"t1":0.51412,"draw":0.26652,"t2":0.21936},"score":"1-0","ET":false,"pens":false,"winner":"Spain","loser":"Argentina"},
+    {"id":103,"phase":"3rd","team1":"France","team2":"England","home_xg":1.23,"away_xg":0.96,"is_played":false,"90min_probs":{"t1":0.42284,"draw":0.2892,"t2":0.28796},"score":"1-0","ET":false,"pens":false,"winner":"France","loser":"England"}
   ]
 }

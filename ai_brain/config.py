@@ -39,7 +39,7 @@ TRANSFERMARKT_FILE = f"{DATA_DIR}transfermarkt_squad_values_2026.csv"
 # ---------------------------------------------------------------------------
 # Run‑time flags
 # ---------------------------------------------------------------------------
-FORCE_FRESH = True                # Delete caches and retrain with current features
+FORCE_FRESH = False               # Delete caches and retrain with current features
 
 # ---------------------------------------------------------------------------
 # Modelling & training hyperparameters

@@ -1,6 +1,6 @@
 ELO RATINGS (as of 2026-06-01)
 Algeria: 1840.88
-Argentina: 2194.02
+Argentina: 2237.62
 Australia: 1895.96
 Austria: 1855.37
 Belgium: 1989.44
@@ -15,8 +15,8 @@ Czech Republic: 1721.58
 DR Congo: 1795.68
 Ecuador: 1916.21
 Egypt: 1848.80
-England: 2108.17
-France: 2196.78
+England: 2107.06
+France: 2153.40
 Germany: 1972.19
 Ghana: 1668.05
 Haiti: 1636.09
@@ -29,7 +29,7 @@ Mexico: 2030.64
 Morocco: 2033.59
 Netherlands: 2022.79
 New Zealand: 1676.89
-Norway: 2009.45
+Norway: 1987.76
 Panama: 1747.34
 Paraguay: 1856.73
 Portugal: 2021.01
@@ -39,9 +39,9 @@ Scotland: 1795.79
 Senegal: 1855.10
 South Africa: 1703.52
 South Korea: 1836.64
-Spain: 2209.33
+Spain: 2252.71
 Sweden: 1765.49
-Switzerland: 1985.13
+Switzerland: 1964.34
 Tunisia: 1642.30
 Turkey: 1880.67
 United States: 1903.21
@@ -78,13 +78,13 @@ Jordan: Sum = 20.30 | Median = 0.78 | Age Avg = 28.4146058387644 | Caps Sum = 95
 Mexico: Sum = 191.85 | Median = 7.38 | Age Avg = 27.380531500163674 | Caps Sum = 1099.0
 Morocco: Sum = 447.70 | Median = 17.22 | Age Avg = 25.391661458798318 | Caps Sum = 723.0
 Netherlands: Sum = 754.20 | Median = 29.01 | Age Avg = 25.92756599113174 | Caps Sum = 634.0
-New Zealand: Sum = 34.30 | Median = 1.32 | Age Avg = 25.619379222093265 | Caps Sum = 557.0
+New Zealand: Sum = 34.30 | Median = 1.32 | Age Avg = 26.51287087462429 | Caps Sum = 620.0
 Norway: Sum = 589.90 | Median = 22.69 | Age Avg = 26.535249828884325 | Caps Sum = 736.0
 Panama: Sum = 34.55 | Median = 1.33 | Age Avg = 28.46293485700681 | Caps Sum = 1231.0
 Paraguay: Sum = 153.65 | Median = 5.91 | Age Avg = 27.622890813320236 | Caps Sum = 619.0
 Portugal: Sum = 1010.00 | Median = 38.67 | Age Avg = 25.40701723060441 | Caps Sum = 757.0
-Qatar: Sum = 19.93 | Median = 0.77 | Age Avg = 30.2234919501235 | Caps Sum = 1427.0
-Saudi Arabia: Sum = 40.68 | Median = 1.56 | Age Avg = 24.56447341011219 | Caps Sum = 431.0
+Qatar: Sum = 19.93 | Median = 0.77 | Age Avg = 30.03708002261703 | Caps Sum = 1414.0
+Saudi Arabia: Sum = 40.68 | Median = 1.56 | Age Avg = 24.651251376365202 | Caps Sum = 434.0
 Scotland: Sum = 170.25 | Median = 6.55 | Age Avg = 27.31994167187453 | Caps Sum = 762.0
 Senegal: Sum = 478.10 | Median = 18.39 | Age Avg = 26.164925750677018 | Caps Sum = 802.0
 South Africa: Sum = 49.25 | Median = 1.89 | Age Avg = 29.27095795018302 | Caps Sum = 372.0

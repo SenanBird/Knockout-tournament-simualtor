@@ -1,20 +1,20 @@
 ELO RANKINGS (all teams)
 ========================================
-   1. Spain                          2209.33
-   2. France                         2196.78
-   3. Argentina                      2194.02
-   4. England                        2108.17
+   1. Spain                          2252.71
+   2. Argentina                      2237.62
+   3. France                         2153.40
+   4. England                        2107.06
    5. Colombia                       2049.23
    6. Brazil                         2040.05
    7. Morocco                        2033.59
    8. Mexico                         2030.64
    9. Netherlands                    2022.79
   10. Portugal                       2021.01
-  11. Norway                         2009.45
-  12. Belgium                        1989.44
-  13. Switzerland                    1985.13
-  14. Germany                        1972.19
-  15. Japan                          1969.80
+  11. Belgium                        1989.44
+  12. Norway                         1987.76
+  13. Germany                        1972.19
+  14. Japan                          1969.80
+  15. Switzerland                    1964.34
   16. Ecuador                        1916.21
   17. Croatia                        1906.23
   18. United States                  1903.21
